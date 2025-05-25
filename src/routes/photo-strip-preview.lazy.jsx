@@ -8,6 +8,25 @@ export const Route = createLazyFileRoute("/photo-strip-preview")({
   component: PhotoStripPreviewComponent,
 });
 
+// Function to determine if a color is dark or light
+// Returns true if the color is dark, false if it's light
+const isColorDark = (hexColor) => {
+  // Remove the # if it exists
+  const hex = hexColor.replace("#", "");
+
+  // Convert hex to RGB
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+
+  // Calculate luminance - using the formula for relative luminance in the sRGB color space
+  // See: https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+  // Return true if dark (luminance less than 0.5), false if light
+  return luminance < 0.5;
+};
+
 function PhotoStripPreviewComponent() {
   const navigate = useNavigate();
   const { photoSession, resetSession, hasActiveSession } = usePhotoContext();
@@ -15,6 +34,17 @@ function PhotoStripPreviewComponent() {
   const canvasRef = useRef(null);
   const [stripGenerated, setStripGenerated] = useState(false);
   const [isGeneratingGif, setIsGeneratingGif] = useState(false);
+  const [frameColor, setFrameColor] = useState("#ffffff"); // Default white frame
+
+  // Pastel color palette options
+  const colorOptions = [
+    { color: "#ffffff", name: "White" },
+    { color: "#FFB6C1", name: "Pastel Pink" },
+    { color: "#ADD8E6", name: "Pastel Blue" },
+    { color: "#BDFCC9", name: "Pastel Green" },
+    { color: "#FFDAB9", name: "Peach" },
+    { color: "#E6E6FA", name: "Lavender" },
+  ];
 
   // Photo strip dimensions - higher resolution for better quality
   const stripWidth = 1200; // Increased for even better quality
@@ -56,13 +86,12 @@ function PhotoStripPreviewComponent() {
       navigate({ to: "/" });
     }
   }, [hasActiveSession, photos, navigate]);
-
-  // Generate the photo strip when component mounts
+  // Generate the photo strip when component mounts or frame color changes
   useEffect(() => {
     if (photos && photos.length > 0) {
       generatePhotoStrip();
     }
-  }, [photos]);
+  }, [photos, frameColor]);
 
   // Function to load an image from base64 data
   const loadImage = (src) => {
@@ -95,12 +124,9 @@ function PhotoStripPreviewComponent() {
 
     // Enable high-quality rendering
     ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = "high";
-
-    // Set white background
-    ctx.fillStyle = "#ffffff";
+    ctx.imageSmoothingQuality = "high"; // Set background color to selected frame color
+    ctx.fillStyle = frameColor;
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-
     try {
       // Load all images
       const images = await Promise.all(photos.map(loadImage));
@@ -183,7 +209,25 @@ function PhotoStripPreviewComponent() {
         // Draw the image (already flipped during capture, so no need to flip again)
         ctx.drawImage(img, x + offsetX, y + offsetY, drawWidth, drawHeight);
         ctx.restore();
-      });
+      }); // Add "little craft" watermark to bottom center
+      ctx.save();
+      ctx.font = "50px Arial";
+
+      // Determine watermark color based on frame color brightness
+      const isDark = isColorDark(frameColor);
+      // Use white for dark backgrounds, semi-transparent black for light backgrounds
+      const watermarkColor = isDark
+        ? "rgba(255, 255, 255, 0.3)"
+        : "rgba(0, 0, 0, 0.3)";
+
+      ctx.fillStyle = watermarkColor;
+      const watermarkText = "@LITTLECRAFTSPH";
+      const watermarkWidth = ctx.measureText(watermarkText).width;
+      // Position: center bottom in the padding area
+      const watermarkX = canvasWidth / 2 - watermarkWidth / 2;
+      const watermarkY = canvasHeight - 40; // Centered in bottom padding
+      ctx.fillText(watermarkText, watermarkX, watermarkY);
+      ctx.restore();
 
       setStripGenerated(true);
     } catch (error) {
@@ -237,9 +281,9 @@ function PhotoStripPreviewComponent() {
           images: processedImages,
           gifWidth: 1200, // Higher resolution
           gifHeight: 900, // 4:3 aspect ratio
-          interval: 1.5, // 1.5 seconds per frame
+          //interval: 0.5, // 0.5 seconds per frame
           numFrames: photos.length,
-          frameDuration: 1.5,
+          frameDuration: 3,
           fontWeight: "normal",
           fontSize: "24px", // Scaled up font
           fontFamily: "sans-serif",
@@ -270,15 +314,47 @@ function PhotoStripPreviewComponent() {
 
   return (
     <div className="photo-strip-container">
-      <h2>Your Photo Strip</h2>
+      <h2>Your Photo Strip</h2>{" "}
       <div className="strip-info">
         Layout: {layout.toUpperCase()} - {photoCount} photos
+      </div>{" "}
+      <div className="strip-preview-container">
+        <div className="canvas-container">
+          <canvas ref={canvasRef} className="photo-strip-canvas" />
+        </div>{" "}
+        <div className="color-picker-container">
+          <p>Choose Frame Color:</p>
+          <div className="color-options">
+            {colorOptions.map((option) => (
+              <button
+                key={option.color}
+                className="color-option"
+                style={{
+                  backgroundColor: option.color,
+                  border:
+                    frameColor === option.color
+                      ? "3px solid #000"
+                      : "1px solid #ccc",
+                }}
+                title={option.name}
+                onClick={() => setFrameColor(option.color)}
+                aria-label={`Select ${option.name} frame color`}
+              />
+            ))}
+          </div>
+          <div className="custom-color-picker">
+            <label htmlFor="custom-color">Custom Color:</label>
+            <input
+              type="color"
+              id="custom-color"
+              value={frameColor}
+              onChange={(e) => setFrameColor(e.target.value)}
+              aria-label="Choose custom frame color"
+            />
+            <span className="color-value">{frameColor}</span>
+          </div>
+        </div>
       </div>
-
-      <div className="canvas-container">
-        <canvas ref={canvasRef} className="photo-strip-canvas" />
-      </div>
-
       {stripGenerated && (
         <div className="download-controls">
           <h3>Download Your Photo Strip</h3>
@@ -296,7 +372,6 @@ function PhotoStripPreviewComponent() {
           </div>
         </div>
       )}
-
       <div className="navigation-controls">
         <button onClick={takeNewPhotos} className="action-btn primary">
           Take New Photos
