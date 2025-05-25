@@ -1,6 +1,7 @@
 import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { useEffect, useState } from "react";
+import { PhotoProvider } from "../context/PhotoContext";
 import "../assets/css/navbar.css";
 
 export const Route = createRootRoute({
@@ -48,7 +49,7 @@ export const Route = createRootRoute({
     }, []);
 
     return (
-      <>
+      <PhotoProvider>
         <div className="nav-container">
           <div className="menu-container">
             <div
@@ -86,7 +87,7 @@ export const Route = createRootRoute({
           <Outlet />
         </div>
         <TanStackRouterDevtools />
-      </>
+      </PhotoProvider>
     );
   },
 });

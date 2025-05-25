@@ -1,6 +1,7 @@
-import { createLazyFileRoute, useSearch } from "@tanstack/react-router";
+import { createLazyFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useRef, useCallback, useEffect } from "react";
 import Webcam from "react-webcam";
+import { usePhotoContext } from "../context/PhotoContext";
 import "../assets/css/photobooth.lazy.css";
 
 export const Route = createLazyFileRoute("/photobooth")({
@@ -8,23 +9,27 @@ export const Route = createLazyFileRoute("/photobooth")({
 });
 
 function PhotoboothComponent() {
-  const search = useSearch({ from: "/photobooth" });
-  const { layout, photoCount } = search;
-  const [capturedPhotos, setCapturedPhotos] = useState([]);
+  const navigate = useNavigate();
+  const { photoSession, addPhoto, clearPhotos } = usePhotoContext();
+  const { layout, photoCount } = photoSession;
+
+  // Redirect to home if no session is active
+  useEffect(() => {
+    if (!layout || !photoCount) {
+      navigate({ to: "/" });
+    }
+  }, [layout, photoCount, navigate]);
+
   const [capturing, setCapturing] = useState(false);
   const [countdown, setCountdown] = useState(null);
-  const [photosRemaining, setPhotosRemaining] = useState(
-    parseInt(photoCount) || 4
-  );
   const [countdownTime, setCountdownTime] = useState(3); // Default to 3 seconds
   const webcamRef = useRef(null);
 
   // Debug log
   console.log("Current state:", {
     layout,
-    photoCount: parseInt(photoCount),
-    capturedPhotos: capturedPhotos.length,
-    photosRemaining,
+    photoCount,
+    capturedPhotos: photoSession.photos.length,
     capturing,
   });
 
@@ -35,26 +40,16 @@ function PhotoboothComponent() {
     facingMode: "user",
   };
 
-  // Initialize photos remaining when component mounts or photoCount changes
-  useEffect(() => {
-    setPhotosRemaining(parseInt(photoCount) || 4);
-  }, [photoCount]);
-
   // Function to capture a photo
   const capturePhoto = useCallback(() => {
     if (webcamRef.current) {
       const imageSrc = webcamRef.current.getScreenshot();
-      setCapturedPhotos((prev) => {
-        const newPhotos = [...prev, imageSrc];
-        console.log(`Captured photo ${newPhotos.length} of ${photoCount}`);
-
-        // Update remaining photos
-        setPhotosRemaining((prevRemaining) => Math.max(0, prevRemaining - 1));
-
-        return newPhotos;
-      });
+      addPhoto(imageSrc);
+      console.log(
+        `Captured photo ${photoSession.photos.length + 1} of ${photoCount}`
+      );
     }
-  }, [webcamRef, photoCount]);
+  }, [webcamRef, addPhoto, photoSession.photos.length, photoCount]);
 
   // Function to handle single countdown and photo capture
   const handleCountdown = useCallback(() => {
@@ -77,9 +72,8 @@ function PhotoboothComponent() {
 
   // Start the capturing process
   const startCapturing = useCallback(async () => {
-    if (capturedPhotos.length >= parseInt(photoCount)) {
-      setCapturedPhotos([]); // Reset if we already have photos
-      setPhotosRemaining(parseInt(photoCount));
+    if (photoSession.photos.length >= photoCount) {
+      clearPhotos(); // Reset if we already have photos
     }
 
     setCapturing(true);
@@ -89,11 +83,11 @@ function PhotoboothComponent() {
       await handleCountdown();
 
       // Wait between photos
-      const totalPhotosNeeded = parseInt(photoCount);
+      const totalPhotosNeeded = photoCount;
       let photosTaken = 1; // We just took one photo
 
       while (photosTaken < totalPhotosNeeded) {
-        await new Promise((resolve) => setTimeout(resolve, 1500)); // Pause between photos
+        await new Promise((resolve) => setTimeout(resolve, 300)); // Pause between photos
         await handleCountdown();
         photosTaken++;
       }
@@ -101,14 +95,24 @@ function PhotoboothComponent() {
       setCapturing(false);
       setCountdown(null);
     }
-  }, [handleCountdown, photoCount, capturedPhotos.length]);
+  }, [handleCountdown, photoCount, photoSession.photos.length, clearPhotos]);
+
+  // Redirect to photo-strip-preview when all photos are captured
+  useEffect(() => {
+    if (
+      photoSession.photos.length === photoCount &&
+      photoSession.photos.length > 0
+    ) {
+      // Navigate to photo-strip-preview
+      navigate({ to: "/photo-strip-preview" });
+    }
+  }, [photoSession.photos, photoCount, navigate]);
 
   // Reset the captures
   const resetCaptures = () => {
-    setCapturedPhotos([]);
+    clearPhotos();
     setCapturing(false);
     setCountdown(null);
-    setPhotosRemaining(parseInt(photoCount) || 4);
   };
 
   // Determine layout class for the grid
@@ -134,7 +138,7 @@ function PhotoboothComponent() {
         Layout: {layout.toUpperCase()} - {photoCount} photos
       </div>
 
-      {capturedPhotos.length < photoCount && (
+      {photoSession.photos.length < photoCount && (
         <div className="webcam-container">
           <Webcam
             audio={false}
@@ -144,13 +148,13 @@ function PhotoboothComponent() {
             className="webcam-video"
             style={{ transform: "scaleX(-1)" }}
           />
-          {countdown !== null && countdown > 0 && (
+          {countdown !== null && countdown >= 0 && (
             <div className="counter">{countdown}</div>
           )}
         </div>
       )}
 
-      {capturedPhotos.length < photoCount && !capturing && (
+      {photoSession.photos.length < photoCount && !capturing && (
         <div className="countdown-selector">
           <p>Select Countdown Time</p>
           <div className="countdown-options">
@@ -180,17 +184,17 @@ function PhotoboothComponent() {
       )}
 
       <div className="controls">
-        {capturedPhotos.length < parseInt(photoCount) ? (
+        {photoSession.photos.length < photoCount ? (
           <button
             className="capture-btn"
             onClick={startCapturing}
             disabled={capturing}
           >
-            {capturedPhotos.length === 0
+            {photoSession.photos.length === 0
               ? "Start Taking Photos"
               : capturing
                 ? `Capturing in progress...`
-                : `Continue Photo Session (${capturedPhotos.length}/${photoCount} taken)`}
+                : `Continue Photo Session (${photoSession.photos.length}/${photoCount} taken)`}
           </button>
         ) : (
           <button className="finish-btn" onClick={resetCaptures}>
@@ -200,37 +204,11 @@ function PhotoboothComponent() {
 
         {capturing && (
           <p className="capturing-status">
-            Taking photo {capturedPhotos.length + 1} of {parseInt(photoCount)}
+            Taking photo {photoSession.photos.length + 1} of {photoCount}
             {countdown !== null && countdown > 0 && ` in ${countdown}...`}
           </p>
         )}
       </div>
-
-      {capturedPhotos.length > 0 && (
-        <>
-          <h3>
-            Captured Photos ({capturedPhotos.length}/{photoCount})
-          </h3>
-          <div className={`photos-grid ${getLayoutClass()}`}>
-            {capturedPhotos.map((photo, index) => (
-              <img
-                key={index}
-                src={photo}
-                alt={`Captured photo ${index + 1}`}
-                className="photo-preview"
-              />
-            ))}
-          </div>
-        </>
-      )}
-
-      {capturedPhotos.length === photoCount && (
-        <div className="strip-preview">
-          <h3>Your Photo Strip is Ready!</h3>
-          <p>You can download or share your photos from here.</p>
-          {/* Additional functionality like download/share could be added here */}
-        </div>
-      )}
     </div>
   );
 }

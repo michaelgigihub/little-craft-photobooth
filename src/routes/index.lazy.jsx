@@ -1,4 +1,5 @@
-import { createLazyFileRoute, Link } from "@tanstack/react-router";
+import { createLazyFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { usePhotoContext } from "../context/PhotoContext";
 import "../assets/css/index.lazy.css";
 import layoutAImage from "../assets/images/layout-a.png";
 import layoutBImage from "../assets/images/layout-b.png";
@@ -10,6 +11,9 @@ export const Route = createLazyFileRoute("/")({
 });
 
 function Index() {
+  const navigate = useNavigate();
+  const { startNewSession } = usePhotoContext();
+
   // Layout configurations with image count
   const layouts = [
     {
@@ -38,6 +42,11 @@ function Index() {
     },
   ];
 
+  const handleLayoutSelect = (layout) => {
+    startNewSession(layout.id, layout.photoCount);
+    navigate({ to: "/photobooth" });
+  };
+
   return (
     <div className="p-2">
       <h3>Choose your layout!</h3>
@@ -48,10 +57,15 @@ function Index() {
       <div className="layout-container">
         {layouts.map((layout) => (
           <div className="layout-item" key={layout.id}>
-            <Link
-              to="/photobooth"
-              search={{ layout: layout.id, photoCount: layout.photoCount }}
+            <button
+              onClick={() => handleLayoutSelect(layout)}
               className="layout-link"
+              style={{
+                border: "none",
+                background: "none",
+                cursor: "pointer",
+                padding: 0,
+              }}
             >
               <img
                 className="layout-image"
@@ -59,7 +73,7 @@ function Index() {
                 alt={layout.alt}
               />
               <div className="layout-info">{layout.photoCount} Photos</div>
-            </Link>
+            </button>
           </div>
         ))}
       </div>
