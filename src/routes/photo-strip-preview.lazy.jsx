@@ -45,13 +45,13 @@ function PhotoStripPreviewComponent() {
     { color: "#FFDAB9", name: "Peach" },
     { color: "#E6E6FA", name: "Lavender" },
   ];
-
   // Photo strip dimensions - higher resolution for better quality
   const stripWidth = 1200; // Increased for even better quality
   const photoMargin = 30; // Increased proportionally
-  // Padding to match CSS: top: 30px, right: 30px, bottom: 300px, left: 30px
-  const canvasPadding = { top: 30, right: 30, bottom: 300, left: 30 };
 
+  // Adjust padding based on layout
+  // For layout "d" with 2 columns, we can use less bottom padding since the strip is shorter
+  const canvasPadding = { top: 30, right: 30, bottom: 300, left: 30 } // Reduced bottom padding for layout d; // Standard padding for other layouts
   // Calculate height based on layout and 4:3 aspect ratio
   const getStripHeight = () => {
     const photoHeight = ((stripWidth - photoMargin * 2) * 3) / 4; // 4:3 aspect ratio
@@ -62,8 +62,11 @@ function PhotoStripPreviewComponent() {
         return (photoHeight + photoMargin) * 3 + photoMargin;
       case "c": // 2 photos, 1 per row
         return (photoHeight + photoMargin) * 2 + photoMargin;
-      case "d": // 6 photos, 2 per row (3 rows)
-        return (photoHeight + photoMargin) * 3 + photoMargin;
+      case "d": // 6 photos, 2 per row (3 rows) - make it shorter since it's more compact
+        // For layout d, calculate a different photoHeight since we have 2 images per row
+        const layoutDPhotoWidth = (stripWidth - photoMargin * 3) / 2; // Width for 2 columns
+        const layoutDPhotoHeight = (layoutDPhotoWidth * 3) / 4; // 4:3 aspect ratio
+        return (layoutDPhotoHeight + photoMargin) * 3 + photoMargin;
       default:
         return (photoHeight + photoMargin) * 4 + photoMargin;
     }
@@ -320,7 +323,10 @@ function PhotoStripPreviewComponent() {
       </div>{" "}
       <div className="strip-preview-container">
         <div className="canvas-container">
-          <canvas ref={canvasRef} className="photo-strip-canvas" />
+          <canvas
+            ref={canvasRef}
+            className={`photo-strip-canvas ${layout === "d" ? "layout-d" : ""}`}
+          />
         </div>{" "}
         <div className="color-picker-container">
           <p>Choose Frame Color:</p>

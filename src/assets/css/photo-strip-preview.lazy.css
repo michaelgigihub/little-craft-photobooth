@@ -68,6 +68,11 @@
   .photo-strip-canvas {
     max-width: 50%;
   }
+
+  /* Special width for layout D (2 photos per row) */
+  .photo-strip-canvas.layout-d {
+    max-width: 65%;
+  }
 }
 
 .download-controls {
