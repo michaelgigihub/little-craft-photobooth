@@ -33,17 +33,22 @@ function PhotoboothComponent() {
     capturing,
   });
 
-  // Set up webcam constraints for better quality with 4:3 aspect ratio
+  // Set up webcam constraints for better quality and mobile compatibility
   const videoConstraints = {
-    width: 1024,
-    height: 768, // 4:3 aspect ratio
+    width: { ideal: 1920, min: 640 }, // Increased from 1024
+    height: { ideal: 1440, min: 480 }, // Increased from 768
     facingMode: "user",
+    aspectRatio: { ideal: 4 / 3 },
   };
 
-  // Function to capture a photo
+  // Function to capture a photo with maximum quality
   const capturePhoto = useCallback(() => {
     if (webcamRef.current) {
-      const imageSrc = webcamRef.current.getScreenshot();
+      const imageSrc = webcamRef.current.getScreenshot({
+        width: 1920, // High resolution
+        height: 1440, // 4:3 aspect ratio
+        quality: 1.0, // Maximum quality
+      });
       addPhoto(imageSrc);
       console.log(
         `Captured photo ${photoSession.photos.length + 1} of ${photoCount}`
@@ -144,6 +149,7 @@ function PhotoboothComponent() {
             audio={false}
             ref={webcamRef}
             screenshotFormat="image/jpeg"
+            screenshotQuality={1.0} // Maximum quality
             videoConstraints={videoConstraints}
             className="webcam-video"
             style={{ transform: "scaleX(-1)" }}

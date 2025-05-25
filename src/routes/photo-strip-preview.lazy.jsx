@@ -23,11 +23,11 @@ function PhotoStripPreviewComponent() {
     }
   }, [layout, photoCount, photos, navigate]);
 
-  // Photo strip dimensions - adjusted for proper layouts
-  const stripWidth = 400;
-  const photoMargin = 10;
-  // Padding to match CSS: top: 10px, right: 10px, bottom: 100px, left: 10px
-  const canvasPadding = { top: 10, right: 10, bottom: 100, left: 10 };
+  // Photo strip dimensions - higher resolution for better quality
+  const stripWidth = 800; // Doubled from 400
+  const photoMargin = 20; // Doubled from 10
+  // Padding to match CSS: top: 20px, right: 20px, bottom: 200px, left: 20px
+  const canvasPadding = { top: 20, right: 20, bottom: 200, left: 20 };
 
   // Calculate height based on layout and 4:3 aspect ratio
   const getStripHeight = () => {
@@ -76,6 +76,10 @@ function PhotoStripPreviewComponent() {
     const ctx = canvas.getContext("2d");
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
+
+    // Enable high-quality rendering
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
 
     // Set white background
     ctx.fillStyle = "#ffffff";
@@ -132,8 +136,28 @@ function PhotoStripPreviewComponent() {
         const y =
           canvasPadding.top + photoMargin + row * (photoHeight + photoMargin);
 
-        // Since both captured images and frames are 4:3, images should fit perfectly
-        // Just draw the image to fill the entire frame
+        // Calculate aspect ratio to maintain image proportions and avoid stretching
+        const imgAspect = img.width / img.height;
+        const frameAspect = photoWidth / photoHeight;
+
+        let drawWidth,
+          drawHeight,
+          offsetX = 0,
+          offsetY = 0;
+
+        if (imgAspect > frameAspect) {
+          // Image is wider than frame - fit height and crop width
+          drawHeight = photoHeight;
+          drawWidth = photoHeight * imgAspect;
+          offsetX = (photoWidth - drawWidth) / 2;
+        } else {
+          // Image is taller than frame - fit width and crop height
+          drawWidth = photoWidth;
+          drawHeight = photoWidth / imgAspect;
+          offsetY = (photoHeight - drawHeight) / 2;
+        }
+
+        // Clip to photo area to prevent overflow
         ctx.save();
         ctx.beginPath();
         ctx.rect(x, y, photoWidth, photoHeight);
@@ -141,7 +165,13 @@ function PhotoStripPreviewComponent() {
 
         // Draw the image (flipped horizontally to match webcam preview)
         ctx.scale(-1, 1);
-        ctx.drawImage(img, -(x + photoWidth), y, photoWidth, photoHeight);
+        ctx.drawImage(
+          img,
+          -(x + offsetX + drawWidth),
+          y + offsetY,
+          drawWidth,
+          drawHeight
+        );
         ctx.restore();
       });
 
@@ -158,7 +188,7 @@ function PhotoStripPreviewComponent() {
 
     const link = document.createElement("a");
     link.download = `photo-strip-${layout}-${Date.now()}.jpg`;
-    link.href = canvas.toDataURL("image/jpeg", 0.9);
+    link.href = canvas.toDataURL("image/jpeg", 1.0); // Maximum quality
     link.click();
   };
 
@@ -174,8 +204,8 @@ function PhotoStripPreviewComponent() {
     gifshot.createGIF(
       {
         images: images,
-        gifWidth: 400,
-        gifHeight: 300,
+        gifWidth: 800, // Doubled resolution
+        gifHeight: 600, // Doubled resolution
         interval: 1.5, // 1.5 seconds per frame
         numFrames: photos.length,
         frameDuration: 1.5,
@@ -183,6 +213,7 @@ function PhotoStripPreviewComponent() {
         fontSize: "16px",
         fontFamily: "sans-serif",
         fontColor: "#ffffff",
+        quality: 10, // Maximum quality (1-10 scale)
       },
       (obj) => {
         setIsGeneratingGif(false);
