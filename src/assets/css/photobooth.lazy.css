@@ -15,14 +15,17 @@
   position: relative;
   /* Maintain 4:3 aspect ratio */
   aspect-ratio: 4/3;
+  overflow: hidden; /* Ensure any overflow is hidden */
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .webcam-video {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: cover; /* This ensures the video covers the container while maintaining aspect ratio */
+  object-position: center; /* Center the video in the container */
   border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .controls {
@@ -204,11 +207,67 @@
   border-color: #0b7dda;
 }
 
+.webcam-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8f8f8;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  min-height: 200px;
+}
+
+.webcam-error p {
+  color: #666;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.retry-btn {
+  background-color: #ff9800;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+.retry-btn:hover {
+  background-color: #f57c00;
+}
+
+.webcam-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .photos-grid.layout-d {
     grid-template-columns: repeat(2, 1fr);
     grid-template-rows: repeat(3, auto);
+  }
+  
+  .webcam-container {
+    max-width: 90vw; /* Ensure good size on mobile */
+  }
+  
+  .webcam-video {
+    /* Ensure high quality rendering on mobile */
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
   }
 }
 
@@ -224,5 +283,13 @@
     font-size: 2rem;
     width: 60px;
     height: 60px;
+  }
+  
+  .webcam-container {
+    max-width: 95vw; /* Even more space utilization on small screens */
+  }
+  
+  .photobooth-container {
+    padding: 0.5rem; /* Reduce padding on very small screens */
   }
 }

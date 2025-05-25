@@ -22,7 +22,9 @@ function PhotoboothComponent() {
 
   const [capturing, setCapturing] = useState(false);
   const [countdown, setCountdown] = useState(null);
-  const [countdownTime, setCountdownTime] = useState(3); // Default to 3 seconds
+  const [countdownTime, setCountdownTime] = useState(3);
+  const [webcamError, setWebcamError] = useState(null);
+  const [webcamReady, setWebcamReady] = useState(false);
   const webcamRef = useRef(null);
 
   // Debug log
@@ -31,27 +33,120 @@ function PhotoboothComponent() {
     photoCount,
     capturedPhotos: photoSession.photos.length,
     capturing,
-  });
-
-  // Set up webcam constraints for better quality and mobile compatibility
-  const videoConstraints = {
-    width: { ideal: 1920, min: 640 }, // Increased from 1024
-    height: { ideal: 1440, min: 480 }, // Increased from 768
-    facingMode: "user",
-    aspectRatio: { ideal: 4 / 3 },
+  });  // Set up webcam constraints for better quality and mobile compatibility
+  const getVideoConstraints = () => {
+    // Detect if we're on a mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      return {
+        width: { ideal: 1280, min: 640 },
+        height: { ideal: 960, min: 480 },
+        facingMode: "user",
+        aspectRatio: { ideal: 4 / 3 },
+        frameRate: { ideal: 30, min: 15 },
+        // Mobile-specific optimizations
+        advanced: [
+          { width: { min: 640, ideal: 1280, max: 1920 } },
+          { height: { min: 480, ideal: 960, max: 1440 } },
+          { aspectRatio: { ideal: 4/3 } },
+          { frameRate: { ideal: 30 } }
+        ]
+      };
+    } else {
+      return {
+        width: { ideal: 1920, min: 640 },
+        height: { ideal: 1440, min: 480 },
+        facingMode: "user",
+        aspectRatio: { ideal: 4 / 3 },
+        frameRate: { ideal: 30, min: 15 },
+        advanced: [
+          { width: { min: 1280 } },
+          { height: { min: 960 } },
+          { aspectRatio: { exact: 4/3 } }
+        ]
+      };
+    }
   };
 
-  // Function to capture a photo with maximum quality
+  const videoConstraints = getVideoConstraints();
+
+  // Handle webcam errors
+  const handleWebcamError = useCallback((error) => {
+    console.error("Webcam error:", error);
+    setWebcamError("Unable to access camera. Please check your camera permissions and try again.");
+  }, []);
+
+  // Handle webcam ready
+  const handleWebcamReady = useCallback(() => {
+    console.log("Webcam is ready");
+    setWebcamReady(true);
+    setWebcamError(null);
+  }, []);
+
+  // Function to capture a photo with maximum quality and proper 4:3 cropping
   const capturePhoto = useCallback(() => {
     if (webcamRef.current) {
-      const imageSrc = webcamRef.current.getScreenshot({
-        width: 1920, // High resolution
-        height: 1440, // 4:3 aspect ratio
-        quality: 1.0, // Maximum quality
+      // Get the webcam video element to check its actual dimensions
+      const video = webcamRef.current.video;
+      if (!video) return;
+
+      console.log("Video dimensions:", {
+        videoWidth: video.videoWidth,
+        videoHeight: video.videoHeight,
+        aspectRatio: video.videoWidth / video.videoHeight
       });
+
+      // Create a canvas to properly crop the image to 4:3 aspect ratio
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      // Set high resolution for the canvas (4:3 aspect ratio)
+      const targetWidth = 1920;
+      const targetHeight = 1440; // 4:3 ratio
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+
+      // Enable high-quality rendering
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+
+      // Calculate the crop area to maintain 4:3 aspect ratio from the video
+      const videoAspect = video.videoWidth / video.videoHeight;
+      const targetAspect = 4 / 3;
+
+      let sourceX = 0, sourceY = 0, sourceWidth = video.videoWidth, sourceHeight = video.videoHeight;
+
+      if (videoAspect > targetAspect) {
+        // Video is wider than 4:3, crop the sides
+        sourceWidth = video.videoHeight * targetAspect;
+        sourceX = (video.videoWidth - sourceWidth) / 2;
+      } else {
+        // Video is taller than 4:3, crop top and bottom
+        sourceHeight = video.videoWidth / targetAspect;
+        sourceY = (video.videoHeight - sourceHeight) / 2;
+      }
+
+      console.log("Crop area:", {
+        sourceX, sourceY, sourceWidth, sourceHeight,
+        cropAspect: sourceWidth / sourceHeight
+      });
+
+      // Draw the cropped video frame to match what's shown in the preview
+      // Flip horizontally to match the mirrored webcam display
+      ctx.scale(-1, 1);
+      ctx.drawImage(
+        video,
+        sourceX, sourceY, sourceWidth, sourceHeight,
+        -targetWidth, 0, targetWidth, targetHeight
+      );
+      
+      // Convert to high-quality JPEG
+      const imageSrc = canvas.toDataURL('image/jpeg', 1.0);
       addPhoto(imageSrc);
+      
       console.log(
-        `Captured photo ${photoSession.photos.length + 1} of ${photoCount}`
+        `Captured photo ${photoSession.photos.length + 1} of ${photoCount} - Size: ${targetWidth}x${targetHeight}`
       );
     }
   }, [webcamRef, addPhoto, photoSession.photos.length, photoCount]);
@@ -153,10 +248,20 @@ function PhotoboothComponent() {
             videoConstraints={videoConstraints}
             className="webcam-video"
             style={{ transform: "scaleX(-1)" }}
+            onUserMedia={() => setWebcamError(null)}
+            onUserMediaError={(error) => setWebcamError("Webcam access denied.")}
+            onReady={() => setWebcamReady(true)}
           />
           {countdown !== null && countdown >= 0 && (
             <div className="counter">{countdown}</div>
           )}
+        </div>
+      )}
+
+      {webcamError && (
+        <div className="webcam-error">
+          <p>{webcamError}</p>
+          <button onClick={() => setWebcamError(null)}>Retry</button>
         </div>
       )}
 
