@@ -10,18 +10,12 @@ export const Route = createLazyFileRoute("/photo-strip-preview")({
 
 function PhotoStripPreviewComponent() {
   const navigate = useNavigate();
-  const { photoSession, resetSession } = usePhotoContext();
+  const { photoSession, resetSession, hasActiveSession } = usePhotoContext();
   const { layout, photoCount, photos } = photoSession;
   const canvasRef = useRef(null);
   const [stripGenerated, setStripGenerated] = useState(false);
   const [isGeneratingGif, setIsGeneratingGif] = useState(false);
 
-  // Redirect to home if no session is active
-  useEffect(() => {
-    if (!layout || !photoCount || !photos || photos.length === 0) {
-      navigate({ to: "/" });
-    }
-  }, [layout, photoCount, photos, navigate]);
   // Photo strip dimensions - higher resolution for better quality
   const stripWidth = 1200; // Increased for even better quality
   const photoMargin = 30; // Increased proportionally
@@ -50,6 +44,19 @@ function PhotoStripPreviewComponent() {
   const canvasWidth = stripWidth + canvasPadding.left + canvasPadding.right;
   const canvasHeight = stripHeight + canvasPadding.top + canvasPadding.bottom;
 
+  // Function to go back and take new photos
+  const takeNewPhotos = () => {
+    resetSession();
+    navigate({ to: "/" });
+  };
+
+  // Redirect to home if no session is active or no photos captured
+  useEffect(() => {
+    if (!hasActiveSession() || !photos || photos.length === 0) {
+      navigate({ to: "/" });
+    }
+  }, [hasActiveSession, photos, navigate]);
+
   // Generate the photo strip when component mounts
   useEffect(() => {
     if (photos && photos.length > 0) {
@@ -66,6 +73,16 @@ function PhotoStripPreviewComponent() {
       img.src = src;
     });
   };
+
+  // Early return check - must be AFTER all hooks have been called
+  if (!hasActiveSession() || !photos || photos.length === 0) {
+    return (
+      <div className="photo-strip-container">
+        <h2>Redirecting...</h2>
+        <p>Loading photo session...</p>
+      </div>
+    );
+  }
 
   // Function to generate the photo strip on canvas
   const generatePhotoStrip = async () => {
@@ -121,7 +138,7 @@ function PhotoStripPreviewComponent() {
           rows = 4;
           photoWidth = stripWidth - photoMargin * 2;
           photoHeight = (photoWidth * 3) / 4; // 4:3 aspect ratio
-      }      // Draw photos in the grid
+      } // Draw photos in the grid
       images.forEach((img, index) => {
         if (index >= cols * rows) return; // Don't draw more photos than the layout supports
 
@@ -164,13 +181,7 @@ function PhotoStripPreviewComponent() {
         ctx.clip();
 
         // Draw the image (already flipped during capture, so no need to flip again)
-        ctx.drawImage(
-          img,
-          x + offsetX,
-          y + offsetY,
-          drawWidth,
-          drawHeight
-        );
+        ctx.drawImage(img, x + offsetX, y + offsetY, drawWidth, drawHeight);
         ctx.restore();
       });
 
@@ -189,7 +200,7 @@ function PhotoStripPreviewComponent() {
     link.download = `photo-strip-${layout}-${Date.now()}.jpg`;
     link.href = canvas.toDataURL("image/jpeg", 1.0); // Maximum quality
     link.click();
-  };  // Function to download as GIF
+  }; // Function to download as GIF
   const downloadAsGIF = async () => {
     if (!photos || photos.length === 0) return;
 
@@ -201,20 +212,20 @@ function PhotoStripPreviewComponent() {
         photos.map(async (photo) => {
           return new Promise((resolve) => {
             // Create a temporary canvas for each image to ensure consistent sizing
-            const tempCanvas = document.createElement('canvas');
-            const tempCtx = tempCanvas.getContext('2d');
+            const tempCanvas = document.createElement("canvas");
+            const tempCtx = tempCanvas.getContext("2d");
             tempCanvas.width = 1200; // High resolution for GIF
             tempCanvas.height = 900; // 4:3 aspect ratio
-            
+
             // Enable high-quality rendering
             tempCtx.imageSmoothingEnabled = true;
-            tempCtx.imageSmoothingQuality = 'high';
-            
+            tempCtx.imageSmoothingQuality = "high";
+
             const img = new Image();
             img.onload = () => {
               // Draw the image to the canvas with consistent sizing
               tempCtx.drawImage(img, 0, 0, 1200, 900);
-              resolve(tempCanvas.toDataURL('image/jpeg', 0.95)); // High quality JPEG for GIF frames
+              resolve(tempCanvas.toDataURL("image/jpeg", 0.95)); // High quality JPEG for GIF frames
             };
             img.src = photo;
           });
@@ -256,25 +267,6 @@ function PhotoStripPreviewComponent() {
       alert("Error processing images for GIF. Please try again.");
     }
   };
-
-  // Function to go back and take new photos
-  const takeNewPhotos = () => {
-    resetSession();
-    navigate({ to: "/" });
-  };
-
-  // Redirect to home if no photos are provided
-  if (!photos || photos.length === 0) {
-    return (
-      <div className="photo-strip-container">
-        <h2>No Photos Found</h2>
-        <p>Please go back and take some photos first.</p>
-        <button onClick={takeNewPhotos} className="action-btn primary">
-          Take Photos
-        </button>
-      </div>
-    );
-  }
 
   return (
     <div className="photo-strip-container">

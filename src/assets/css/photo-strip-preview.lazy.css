@@ -34,6 +34,13 @@
   image-rendering: pixelated;
 }
 
+/* Adjust canvas size for larger screens */
+@media (min-width: 768px) {
+  .photo-strip-canvas {
+    max-width: 30%;
+  }
+}
+
 .download-controls {
   margin: 2rem 0;
   text-align: center;

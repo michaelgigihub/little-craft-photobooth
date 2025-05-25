@@ -4,20 +4,57 @@
   align-items: center;
   max-width: 100%;
   margin: 0 auto;
-  padding: 1rem;
   box-sizing: border-box;
+}
+
+/* New flex container for webcam and preview */
+.webcam-preview-container {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
 }
 
 .webcam-container {
   width: 100%;
   max-width: 640px;
-  margin-bottom: 1rem;
   position: relative;
   /* Maintain 4:3 aspect ratio */
   aspect-ratio: 4/3;
   overflow: hidden; /* Ensure any overflow is hidden */
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  flex: 3;
+}
+
+/* New style for the preview image container */
+.preview-container {
+  flex: 1;
+  width: 100%;
+  max-width: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+}
+
+.preview-image {
+  width: 100%;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.preview-label {
+  font-size: 0.9rem;
+  color: #666;
+  text-align: center;
 }
 
 .webcam-video {
@@ -259,15 +296,26 @@
     grid-template-columns: repeat(2, 1fr);
     grid-template-rows: repeat(3, auto);
   }
-  
+
   .webcam-container {
     max-width: 90vw; /* Ensure good size on mobile */
   }
-  
+
   .webcam-video {
     /* Ensure high quality rendering on mobile */
     image-rendering: -webkit-optimize-contrast;
     image-rendering: crisp-edges;
+  }
+
+  /* Stack webcam and preview vertically on mobile */
+  .webcam-preview-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .preview-container {
+    max-width: 150px;
+    margin-top: 0.5rem;
   }
 }
 
@@ -284,11 +332,11 @@
     width: 60px;
     height: 60px;
   }
-  
+
   .webcam-container {
     max-width: 95vw; /* Even more space utilization on small screens */
   }
-  
+
   .photobooth-container {
     padding: 0.5rem; /* Reduce padding on very small screens */
   }

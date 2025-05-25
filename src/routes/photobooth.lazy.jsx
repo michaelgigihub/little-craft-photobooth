@@ -10,16 +10,26 @@ export const Route = createLazyFileRoute("/photobooth")({
 
 function PhotoboothComponent() {
   const navigate = useNavigate();
-  const { photoSession, addPhoto, clearPhotos } = usePhotoContext();
+  const { photoSession, addPhoto, clearPhotos, hasActiveSession } =
+    usePhotoContext();
   const { layout, photoCount } = photoSession;
 
   // Redirect to home if no session is active
   useEffect(() => {
-    if (!layout || !photoCount) {
+    if (!hasActiveSession()) {
       navigate({ to: "/" });
     }
-  }, [layout, photoCount, navigate]);
+  }, [hasActiveSession, navigate]);
 
+  // Early return if no valid session to prevent errors during redirect
+  if (!hasActiveSession()) {
+    return (
+      <div className="photobooth-container">
+        <h2>Redirecting...</h2>
+        <p>Setting up photo booth session...</p>
+      </div>
+    );
+  }
   const [capturing, setCapturing] = useState(false);
   const [countdown, setCountdown] = useState(null);
   const [countdownTime, setCountdownTime] = useState(3);
@@ -33,11 +43,14 @@ function PhotoboothComponent() {
     photoCount,
     capturedPhotos: photoSession.photos.length,
     capturing,
-  });  // Set up webcam constraints for better quality and mobile compatibility
+  }); // Set up webcam constraints for better quality and mobile compatibility
   const getVideoConstraints = () => {
     // Detect if we're on a mobile device
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
+    const isMobile =
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      );
+
     if (isMobile) {
       return {
         width: { ideal: 1280, min: 640 },
@@ -49,9 +62,9 @@ function PhotoboothComponent() {
         advanced: [
           { width: { min: 640, ideal: 1280, max: 1920 } },
           { height: { min: 480, ideal: 960, max: 1440 } },
-          { aspectRatio: { ideal: 4/3 } },
-          { frameRate: { ideal: 30 } }
-        ]
+          { aspectRatio: { ideal: 4 / 3 } },
+          { frameRate: { ideal: 30 } },
+        ],
       };
     } else {
       return {
@@ -63,8 +76,8 @@ function PhotoboothComponent() {
         advanced: [
           { width: { min: 1280 } },
           { height: { min: 960 } },
-          { aspectRatio: { exact: 4/3 } }
-        ]
+          { aspectRatio: { exact: 4 / 3 } },
+        ],
       };
     }
   };
@@ -74,10 +87,11 @@ function PhotoboothComponent() {
   // Handle webcam errors
   const handleWebcamError = useCallback((error) => {
     console.error("Webcam error:", error);
-    setWebcamError("Unable to access camera. Please check your camera permissions and try again.");
+    setWebcamError(
+      "Unable to access camera. Please check your camera permissions and try again."
+    );
   }, []);
-
-  // Handle webcam ready
+  // Handle webcam ready (called when user media is accessed successfully)
   const handleWebcamReady = useCallback(() => {
     console.log("Webcam is ready");
     setWebcamReady(true);
@@ -94,13 +108,13 @@ function PhotoboothComponent() {
       console.log("Video dimensions:", {
         videoWidth: video.videoWidth,
         videoHeight: video.videoHeight,
-        aspectRatio: video.videoWidth / video.videoHeight
+        aspectRatio: video.videoWidth / video.videoHeight,
       });
 
       // Create a canvas to properly crop the image to 4:3 aspect ratio
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
       // Set high resolution for the canvas (4:3 aspect ratio)
       const targetWidth = 1920;
       const targetHeight = 1440; // 4:3 ratio
@@ -109,13 +123,16 @@ function PhotoboothComponent() {
 
       // Enable high-quality rendering
       ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
+      ctx.imageSmoothingQuality = "high";
 
       // Calculate the crop area to maintain 4:3 aspect ratio from the video
       const videoAspect = video.videoWidth / video.videoHeight;
       const targetAspect = 4 / 3;
 
-      let sourceX = 0, sourceY = 0, sourceWidth = video.videoWidth, sourceHeight = video.videoHeight;
+      let sourceX = 0,
+        sourceY = 0,
+        sourceWidth = video.videoWidth,
+        sourceHeight = video.videoHeight;
 
       if (videoAspect > targetAspect) {
         // Video is wider than 4:3, crop the sides
@@ -128,8 +145,11 @@ function PhotoboothComponent() {
       }
 
       console.log("Crop area:", {
-        sourceX, sourceY, sourceWidth, sourceHeight,
-        cropAspect: sourceWidth / sourceHeight
+        sourceX,
+        sourceY,
+        sourceWidth,
+        sourceHeight,
+        cropAspect: sourceWidth / sourceHeight,
       });
 
       // Draw the cropped video frame to match what's shown in the preview
@@ -137,14 +157,20 @@ function PhotoboothComponent() {
       ctx.scale(-1, 1);
       ctx.drawImage(
         video,
-        sourceX, sourceY, sourceWidth, sourceHeight,
-        -targetWidth, 0, targetWidth, targetHeight
+        sourceX,
+        sourceY,
+        sourceWidth,
+        sourceHeight,
+        -targetWidth,
+        0,
+        targetWidth,
+        targetHeight
       );
-      
+
       // Convert to high-quality JPEG
-      const imageSrc = canvas.toDataURL('image/jpeg', 1.0);
+      const imageSrc = canvas.toDataURL("image/jpeg", 1.0);
       addPhoto(imageSrc);
-      
+
       console.log(
         `Captured photo ${photoSession.photos.length + 1} of ${photoCount} - Size: ${targetWidth}x${targetHeight}`
       );
@@ -230,7 +256,6 @@ function PhotoboothComponent() {
         return "layout-a";
     }
   };
-
   return (
     <div className="photobooth-container">
       <h2>Photo Booth</h2>
@@ -239,21 +264,36 @@ function PhotoboothComponent() {
       </div>
 
       {photoSession.photos.length < photoCount && (
-        <div className="webcam-container">
-          <Webcam
-            audio={false}
-            ref={webcamRef}
-            screenshotFormat="image/jpeg"
-            screenshotQuality={1.0} // Maximum quality
-            videoConstraints={videoConstraints}
-            className="webcam-video"
-            style={{ transform: "scaleX(-1)" }}
-            onUserMedia={() => setWebcamError(null)}
-            onUserMediaError={(error) => setWebcamError("Webcam access denied.")}
-            onReady={() => setWebcamReady(true)}
-          />
-          {countdown !== null && countdown >= 0 && (
-            <div className="counter">{countdown}</div>
+        <div className="webcam-preview-container">
+          <div className="webcam-container">
+            <Webcam
+              audio={false}
+              ref={webcamRef}
+              screenshotFormat="image/jpeg"
+              screenshotQuality={1.0} // Maximum quality
+              videoConstraints={videoConstraints}
+              className="webcam-video"
+              style={{ transform: "scaleX(-1)" }}
+              onUserMedia={handleWebcamReady}
+              onUserMediaError={handleWebcamError}
+            />
+            {countdown !== null && countdown >= 0 && (
+              <div className="counter">{countdown}</div>
+            )}
+          </div>
+
+          {/* Preview of the latest captured photo */}
+          {photoSession.photos.length > 0 && (
+            <div className="preview-container">
+              <img
+                src={photoSession.photos[photoSession.photos.length - 1]}
+                alt="Last captured photo"
+                className="preview-image"
+              />
+              <div className="preview-label">
+                Photo {photoSession.photos.length}/{photoCount}
+              </div>
+            </div>
           )}
         </div>
       )}
