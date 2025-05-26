@@ -1,6 +1,7 @@
 import { createLazyFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useRef, useCallback, useEffect } from "react";
 import Webcam from "react-webcam";
+import { SwitchCamera } from "lucide-react";
 import { usePhotoContext } from "../context/PhotoContext";
 import "../assets/css/photobooth.lazy.css";
 
@@ -35,6 +36,8 @@ function PhotoboothComponent() {
   const [countdownTime, setCountdownTime] = useState(3);
   const [webcamError, setWebcamError] = useState(null);
   const [webcamReady, setWebcamReady] = useState(false);
+  const [facingMode, setFacingMode] = useState("user"); // "user" for front, "environment" for rear
+  const [hasRearCamera, setHasRearCamera] = useState(false);
   const webcamRef = useRef(null);
 
   // Debug log
@@ -43,19 +46,19 @@ function PhotoboothComponent() {
     photoCount,
     capturedPhotos: photoSession.photos.length,
     capturing,
-  }); // Set up webcam constraints for better quality and mobile compatibility
-  const getVideoConstraints = () => {
-    // Detect if we're on a mobile device
-    const isMobile =
-      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-        navigator.userAgent
-      );
+  }); // Detect if we're on a mobile device
+  const isMobile =
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
 
+  // Set up webcam constraints for better quality and mobile compatibility
+  const getVideoConstraints = () => {
     if (isMobile) {
       return {
         width: { ideal: 1280, min: 640 },
         height: { ideal: 960, min: 480 },
-        facingMode: "user",
+        facingMode: facingMode, // Use state variable
         aspectRatio: { ideal: 4 / 3 },
         frameRate: { ideal: 30, min: 15 },
         // Mobile-specific optimizations
@@ -70,7 +73,7 @@ function PhotoboothComponent() {
       return {
         width: { ideal: 1920, min: 640 },
         height: { ideal: 1440, min: 480 },
-        facingMode: "user",
+        facingMode: facingMode, // Use state variable
         aspectRatio: { ideal: 4 / 3 },
         frameRate: { ideal: 30, min: 15 },
         advanced: [
@@ -82,6 +85,16 @@ function PhotoboothComponent() {
     }
   };
 
+  // Determine if we should flip the video horizontally
+  // Front camera (user) should be mirrored for natural selfie experience
+  // Rear camera (environment) should NOT be mirrored, especially on mobile
+  const shouldFlipVideo = () => {
+    if (isMobile && facingMode === "environment") {
+      return false; // Don't flip rear camera on mobile
+    }
+    return true; // Flip front camera and all cameras on desktop
+  };
+
   const videoConstraints = getVideoConstraints();
 
   // Handle webcam errors
@@ -90,13 +103,114 @@ function PhotoboothComponent() {
     setWebcamError(
       "Unable to access camera. Please check your camera permissions and try again."
     );
-  }, []);
-  // Handle webcam ready (called when user media is accessed successfully)
-  const handleWebcamReady = useCallback(() => {
+  }, []); // Handle webcam ready (called when user media is accessed successfully)
+  const handleWebcamReady = useCallback(async () => {
     console.log("Webcam is ready");
     setWebcamReady(true);
     setWebcamError(null);
+
+    // Check cameras after permission is granted
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoInputs = devices.filter(
+        (device) => device.kind === "videoinput"
+      );
+
+      // Check if we have both front and rear cameras
+      const hasFront = videoInputs.some(
+        (device) =>
+          device.label.toLowerCase().includes("front") ||
+          device.label.toLowerCase().includes("user")
+      );
+      const hasRear = videoInputs.some(
+        (device) =>
+          device.label.toLowerCase().includes("back") ||
+          device.label.toLowerCase().includes("rear") ||
+          device.label.toLowerCase().includes("environment")
+      );
+
+      // If we can't determine from labels, assume rear camera exists if there are multiple cameras
+      const hasMultipleCameras = videoInputs.length > 1;
+      setHasRearCamera(hasRear || hasMultipleCameras);
+
+      console.log("Available cameras after permission granted:", {
+        total: videoInputs.length,
+        hasFront,
+        hasRear: hasRear || hasMultipleCameras,
+        devices: videoInputs.map((d) => ({
+          label: d.label,
+          deviceId: d.deviceId,
+        })),
+      });
+    } catch (error) {
+      console.error("Error checking cameras after permission:", error);
+      setHasRearCamera(false);
+    }
   }, []);
+
+  // Check for available cameras on component mount
+  useEffect(() => {
+    const checkCameras = async () => {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoInputs = devices.filter(
+          (device) => device.kind === "videoinput"
+        );
+
+        // Only do a basic check initially - detailed check happens after permission
+        const hasMultipleCameras = videoInputs.length > 1;
+
+        // If we have labels (permission already granted), do full check
+        const hasLabels = videoInputs.some(
+          (device) => device.label && device.label.trim() !== ""
+        );
+
+        if (hasLabels) {
+          const hasFront = videoInputs.some(
+            (device) =>
+              device.label.toLowerCase().includes("front") ||
+              device.label.toLowerCase().includes("user")
+          );
+          const hasRear = videoInputs.some(
+            (device) =>
+              device.label.toLowerCase().includes("back") ||
+              device.label.toLowerCase().includes("rear") ||
+              device.label.toLowerCase().includes("environment")
+          );
+          setHasRearCamera(hasRear || hasMultipleCameras);
+        } else {
+          // Without permission, we can only guess based on device count
+          // Set to false initially, will be updated when webcam is ready
+          setHasRearCamera(false);
+        }
+
+        console.log("Initial camera check:", {
+          total: videoInputs.length,
+          hasLabels,
+          hasMultipleCameras,
+          devices: videoInputs.map((d) => ({
+            label: d.label || "No label (permission needed)",
+            deviceId: d.deviceId,
+          })),
+        });
+      } catch (error) {
+        console.error("Error checking cameras:", error);
+        setHasRearCamera(false);
+      }
+    };
+
+    checkCameras();
+  }, []);
+  // Function to switch camera
+  const switchCamera = useCallback(() => {
+    if (!hasRearCamera || countdown === 0 || capturing) return;
+
+    setFacingMode((prevMode) => (prevMode === "user" ? "environment" : "user"));
+    console.log(
+      "Switching camera to:",
+      facingMode === "user" ? "environment" : "user"
+    );
+  }, [hasRearCamera, countdown, facingMode, capturing]);
 
   // Function to capture a photo with maximum quality and proper 4:3 cropping
   const capturePhoto = useCallback(() => {
@@ -143,7 +257,6 @@ function PhotoboothComponent() {
         sourceHeight = video.videoWidth / targetAspect;
         sourceY = (video.videoHeight - sourceHeight) / 2;
       }
-
       console.log("Crop area:", {
         sourceX,
         sourceY,
@@ -153,29 +266,59 @@ function PhotoboothComponent() {
       });
 
       // Draw the cropped video frame to match what's shown in the preview
-      // Flip horizontally to match the mirrored webcam display
-      ctx.scale(-1, 1);
-      ctx.drawImage(
-        video,
-        sourceX,
-        sourceY,
-        sourceWidth,
-        sourceHeight,
-        -targetWidth,
-        0,
-        targetWidth,
-        targetHeight
-      );
+      // Determine flip logic at capture time based on current camera state
+      const shouldFlip =
+        isMobile && facingMode === "environment" ? false : true;
+
+      console.log("Capture flip logic:", {
+        isMobile,
+        facingMode,
+        shouldFlip,
+      });
+
+      if (shouldFlip) {
+        ctx.scale(-1, 1);
+        ctx.drawImage(
+          video,
+          sourceX,
+          sourceY,
+          sourceWidth,
+          sourceHeight,
+          -targetWidth,
+          0,
+          targetWidth,
+          targetHeight
+        );
+      } else {
+        // Don't flip for rear camera on mobile
+        ctx.drawImage(
+          video,
+          sourceX,
+          sourceY,
+          sourceWidth,
+          sourceHeight,
+          0,
+          0,
+          targetWidth,
+          targetHeight
+        );
+      }
 
       // Convert to high-quality JPEG
       const imageSrc = canvas.toDataURL("image/jpeg", 1.0);
       addPhoto(imageSrc);
-
       console.log(
         `Captured photo ${photoSession.photos.length + 1} of ${photoCount} - Size: ${targetWidth}x${targetHeight}`
       );
     }
-  }, [webcamRef, addPhoto, photoSession.photos.length, photoCount]);
+  }, [
+    webcamRef,
+    addPhoto,
+    photoSession.photos.length,
+    photoCount,
+    isMobile,
+    facingMode,
+  ]);
 
   // Function to handle single countdown and photo capture
   const handleCountdown = useCallback(() => {
@@ -265,23 +408,42 @@ function PhotoboothComponent() {
 
       {photoSession.photos.length < photoCount && (
         <div className="webcam-preview-container">
+          {" "}
           <div className="webcam-container">
+            {" "}
             <Webcam
               audio={false}
               ref={webcamRef}
+              key={facingMode} // Force re-render when camera switches
               screenshotFormat="image/jpeg"
               screenshotQuality={1.0} // Maximum quality
               videoConstraints={videoConstraints}
               className="webcam-video"
-              style={{ transform: "scaleX(-1)" }}
+              style={{
+                transform: shouldFlipVideo() ? "scaleX(-1)" : "scaleX(1)",
+              }}
               onUserMedia={handleWebcamReady}
               onUserMediaError={handleWebcamError}
             />
             {countdown !== null && countdown >= 0 && (
               <div className="counter">{countdown}</div>
-            )}
+            )}{" "}
+            {/* Camera switch button */}
+            <button
+              className={`camera-switch-btn ${!hasRearCamera || countdown === 0 || capturing ? "disabled" : ""}`}
+              onClick={switchCamera}
+              disabled={!hasRearCamera || countdown === 0 || capturing}
+              title={
+                capturing
+                  ? "Cannot switch camera during capture session"
+                  : hasRearCamera
+                    ? "Switch Camera"
+                    : "No rear camera available"
+              }
+            >
+              <SwitchCamera size={24} />
+            </button>
           </div>
-
           {/* Preview of the latest captured photo */}
           {photoSession.photos.length > 0 && (
             <div className="preview-container">
