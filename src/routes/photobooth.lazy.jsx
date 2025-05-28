@@ -56,15 +56,15 @@ function PhotoboothComponent() {
   const getVideoConstraints = () => {
     if (isMobile) {
       return {
-        width: { ideal: 1280, min: 640 },
-        height: { ideal: 960, min: 480 },
+        width: { ideal: 1920, min: 640 },
+        height: { ideal: 1440, min: 480 },
         facingMode: facingMode, // Use state variable
         aspectRatio: { ideal: 4 / 3 },
         frameRate: { ideal: 30, min: 15 },
         // Mobile-specific optimizations
         advanced: [
-          { width: { min: 640, ideal: 1280, max: 1920 } },
-          { height: { min: 480, ideal: 960, max: 1440 } },
+          { width: { min: 640, ideal: 1920, max: 1920 } },
+          { height: { min: 480, ideal: 1440, max: 1440 } },
           { aspectRatio: { ideal: 4 / 3 } },
           { frameRate: { ideal: 30 } },
         ],

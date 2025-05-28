@@ -45,37 +45,82 @@ function PhotoStripPreviewComponent() {
     { color: "#FFDAB9", name: "Peach" },
     { color: "#E6E6FA", name: "Lavender" },
   ];
-  // Photo strip dimensions - higher resolution for better quality
-  const stripWidth = 1200; // Increased for even better quality
-  const photoMargin = 30; // Increased proportionally
+
+  // Photo strip width based on layout
+  const getStripWidth = () => {
+    switch (layout) {
+      case "a":
+        return 1200; // Layout A: 1200px width
+      case "b":
+        return 600; // Layout B: 600px width
+      default:
+        return 0; // Default: 0px (to be determined for layouts C and D)
+    }
+  };
+
+  const stripWidth = getStripWidth();
+
+  const getSidePhotoPad = () => {
+    switch (layout) {
+      case "a":
+        return 60; // Layout A: 1200px width
+      case "b":
+        return 30; // Layout B: 600px width
+      default:
+        return 0; // Default: 0px (to be determined for layouts C and D)
+    }
+  };
+  const photoSidePad = getSidePhotoPad(); // Margin between photos
+
+  const getPhotoGap = () => {
+    switch (layout) {
+      case "a":
+        return 30; // Layout A: 1200px width
+      case "b":
+        return 60; // Layout B: 600px width
+      default:
+        return 0; // Default: 0px (to be determined for layouts C and D)
+    }
+  };
+  const photoGap = getPhotoGap(); // Margin between photos
 
   // Adjust padding based on layout
-  // For layout "d" with 2 columns, we can use less bottom padding since the strip is shorter
-  const canvasPadding = { top: 30, right: 30, bottom: 300, left: 30 } // Reduced bottom padding for layout d; // Standard padding for other layouts
-  // Calculate height based on layout and 4:3 aspect ratio
+  let canvasPadding;
+  switch (layout) {
+    case "a":
+      canvasPadding = { top: 120, left: 67 };
+      break;
+    case "b":
+      canvasPadding = { top: 80, left: 30 };
+      break;
+    default:
+      canvasPadding = { top: 0, left: 0 };
+  }
+
+  // Calculate height to ensure standard 2:6 aspect ratio for layouts A and B
   const getStripHeight = () => {
-    const photoHeight = ((stripWidth - photoMargin * 2) * 3) / 4; // 4:3 aspect ratio
     switch (layout) {
-      case "a": // 4 photos, 1 per row
-        return (photoHeight + photoMargin) * 4 + photoMargin;
-      case "b": // 3 photos, 1 per row
-        return (photoHeight + photoMargin) * 3 + photoMargin;
-      case "c": // 2 photos, 1 per row
-        return (photoHeight + photoMargin) * 2 + photoMargin;
-      case "d": // 6 photos, 2 per row (3 rows) - make it shorter since it's more compact
-        // For layout d, calculate a different photoHeight since we have 2 images per row
-        const layoutDPhotoWidth = (stripWidth - photoMargin * 3) / 2; // Width for 2 columns
+      case "a": // 4 photos, 1 per row - standard 2:6 aspect ratio
+        return 3600; //fixed 3600(3100 + 470 bottom pad) height for 4 photos
+      case "b": // 3 photos, 1 per row - standard 2:6 aspect ratio
+        return 1800; //fixed 1800px(1300px + 470 bottom pad) height for 3 photos
+      case "c": // 2 photos, 1 per row - shorter strip
+        const photoHeight = ((stripWidth - photoSidePad * 2) * 3) / 4; // 4:3 aspect ratio
+        return (photoHeight + photoSidePad) * 2 + photoSidePad;
+      case "d": // 6 photos, 2 per row (3 rows) - compact layout
+        // For layout d, calculate based on 2-column layout
+        const layoutDPhotoWidth = (stripWidth - photoSidePad * 3) / 2; // Width for 2 columns
         const layoutDPhotoHeight = (layoutDPhotoWidth * 3) / 4; // 4:3 aspect ratio
-        return (layoutDPhotoHeight + photoMargin) * 3 + photoMargin;
+        return (layoutDPhotoHeight + photoSidePad) * 3 + photoSidePad;
       default:
-        return (photoHeight + photoMargin) * 4 + photoMargin;
+        return stripWidth * 3; // Default to 2:6 ratio
     }
   };
   const stripHeight = getStripHeight();
 
   // Canvas dimensions including padding
-  const canvasWidth = stripWidth + canvasPadding.left + canvasPadding.right;
-  const canvasHeight = stripHeight + canvasPadding.top + canvasPadding.bottom;
+  const canvasWidth = stripWidth;
+  const canvasHeight = stripHeight;
 
   // Function to go back and take new photos
   const takeNewPhotos = () => {
@@ -132,41 +177,40 @@ function PhotoStripPreviewComponent() {
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
     try {
       // Load all images
-      const images = await Promise.all(photos.map(loadImage));
-
-      // Calculate layout dimensions based on selected layout
+      const images = await Promise.all(photos.map(loadImage)); // Calculate layout dimensions based on selected layout
       let photoWidth, photoHeight, cols, rows;
 
       switch (layout) {
-        case "a": // 4 photos, 1 per row (vertical strip)
+        case "a": // 4 photos, 1 per row (standard 2:6 strip)
           cols = 1;
           rows = 4;
-          photoWidth = stripWidth - photoMargin * 2;
-          photoHeight = (photoWidth * 3) / 4; // 4:3 aspect ratio
+          photoWidth = stripWidth - canvasPadding.left * 2;
+          // For 2:6 ratio strip, distribute height evenly among 4 photos plus margins
+          photoHeight = (3 / 4) * photoWidth; //to make it 4:3 aspect ratio base on the photo width
           break;
-        case "b": // 3 photos, 1 per row (vertical strip)
+        case "b": // 3 photos, 1 per row (standard 2:6 strip)
           cols = 1;
           rows = 3;
-          photoWidth = stripWidth - photoMargin * 2;
-          photoHeight = (photoWidth * 3) / 4; // 4:3 aspect ratio
+          photoWidth = stripWidth - canvasPadding.left * 2; // fix size considering the side margins
+          photoHeight = (3 / 4) * photoWidth;
           break;
-        case "c": // 2 photos, 1 per row (vertical strip)
+        case "c": // 2 photos, 1 per row (shorter strip)
           cols = 1;
           rows = 2;
-          photoWidth = stripWidth - photoMargin * 2;
-          photoHeight = (photoWidth * 3) / 4; // 4:3 aspect ratio
+          photoWidth = stripWidth - photoSidePad * 2;
+          photoHeight = (photoWidth * 3) / 4; // Maintain 4:3 aspect ratio
           break;
         case "d": // 6 photos, 2 per row (3 rows)
           cols = 2;
           rows = 3;
-          photoWidth = (stripWidth - photoMargin * 3) / 2;
-          photoHeight = (photoWidth * 3) / 4; // 4:3 aspect ratio
+          photoWidth = (stripWidth - photoSidePad * 3) / 2;
+          photoHeight = (photoWidth * 3) / 4; // Maintain 4:3 aspect ratio
           break;
         default:
           cols = 1;
           rows = 4;
-          photoWidth = stripWidth - photoMargin * 2;
-          photoHeight = (photoWidth * 3) / 4; // 4:3 aspect ratio
+          photoWidth = stripWidth - photoSidePad * 2;
+          photoHeight = (stripHeight - photoSidePad * 5) / 4;
       } // Draw photos in the grid
       images.forEach((img, index) => {
         if (index >= cols * rows) return; // Don't draw more photos than the layout supports
@@ -174,10 +218,8 @@ function PhotoStripPreviewComponent() {
         const col = index % cols;
         const row = Math.floor(index / cols);
 
-        const x =
-          canvasPadding.left + photoMargin + col * (photoWidth + photoMargin);
-        const y =
-          canvasPadding.top + photoMargin + row * (photoHeight + photoMargin);
+        const x = canvasPadding.left + col * (photoWidth + photoGap);
+        const y = canvasPadding.top + row * (photoHeight + photoGap);
 
         // Since we already cropped the image to 4:3 during capture, we should maintain that ratio
         const imgAspect = img.width / img.height;
@@ -214,7 +256,17 @@ function PhotoStripPreviewComponent() {
         ctx.restore();
       }); // Add "little craft" watermark to bottom center
       ctx.save();
-      ctx.font = "50px Arial";
+      // Set watermark font size based on layout
+      switch (layout) {
+        case "a":
+          ctx.font = "50px Arial";
+          break;
+        case "b":
+          ctx.font = "25px Arial";
+          break;
+        default:
+          ctx.font = "0px Arial";
+      }
 
       // Determine watermark color based on frame color brightness
       const isDark = isColorDark(frameColor);
