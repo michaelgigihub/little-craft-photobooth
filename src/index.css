@@ -1,6 +1,17 @@
+@font-face {
+  font-family: "Vintage Goods";
+  src: url("./assets/Fonts/Vintage Goods.otf") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+}
+
 :root {
-  --primary-color: #007bff;
-  --font-base: 'Inter', sans-serif;
+  --color-primary: #2E3F59;
+  --color-text-on-primary-black: #2e3f59;
+  --color-text-on-primary-white: #FFFFFF;
+
+  --font-family-primary: "Vintage Goods", serif;
+  --font-family-body: "Ovo", sans-serif;
   --spacing: 1rem;
 }
 
@@ -10,20 +21,38 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   height: 100%;
   min-height: 100vh;
-  font-family: sans-serif;
+  font-family: var(--font-family-body);
+  color: var(--color-text-on-primary-black);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-img, picture, video, canvas, svg {
+img,
+picture,
+video,
+canvas,
+svg {
   display: block;
   max-width: 100%;
 }
 
-input, button, textarea, select {
+input,
+button,
+textarea,
+select {
   font: inherit;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-family-primary);
 }

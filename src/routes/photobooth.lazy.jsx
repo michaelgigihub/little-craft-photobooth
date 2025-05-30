@@ -96,13 +96,13 @@ function PhotoboothComponent() {
   };
 
   const videoConstraints = getVideoConstraints();
-
   // Handle webcam errors
   const handleWebcamError = useCallback((error) => {
     console.error("Webcam error:", error);
-    setWebcamError(
-      "Unable to access camera. Please check your camera permissions and try again."
-    );
+    const errorMessage =
+      "Unable to access camera. Please check your camera permissions and try again.";
+    setWebcamError(errorMessage);
+    alert(errorMessage);
   }, []); // Handle webcam ready (called when user media is accessed successfully)
   const handleWebcamReady = useCallback(async () => {
     console.log("Webcam is ready");
@@ -457,13 +457,6 @@ function PhotoboothComponent() {
               </div>
             </div>
           )}
-        </div>
-      )}
-
-      {webcamError && (
-        <div className="webcam-error">
-          <p>{webcamError}</p>
-          <button onClick={() => setWebcamError(null)}>Retry</button>
         </div>
       )}
 

@@ -239,6 +239,68 @@
   border-radius: 3px;
 }
 
+/* Frame picker styles */
+.frame-picker-container {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #ddd;
+  width: 100%;
+}
+
+.frame-picker-container p {
+  margin-bottom: 0.75rem;
+  font-weight: bold;
+  text-align: center;
+}
+
+.frame-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.frame-option {
+  padding: 8px 12px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  background-color: #fff;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  text-align: center;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.frame-option:hover:not(.disabled) {
+  border-color: #2196f3;
+  background-color: #f0f8ff;
+  transform: translateY(-1px);
+}
+
+.frame-option.selected {
+  border-color: #2196f3;
+  background-color: #2196f3;
+  color: white;
+}
+
+.frame-option.disabled {
+  background-color: #f5f5f5;
+  color: #999;
+  cursor: not-allowed;
+  border-color: #ccc;
+}
+
+.frame-option.disabled:hover {
+  transform: none;
+  background-color: #f5f5f5;
+  border-color: #ccc;
+}
+
 /* Responsive design */
 @media (min-width: 640px) {
   .download-buttons {

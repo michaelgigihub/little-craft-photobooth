@@ -35,6 +35,7 @@ function PhotoStripPreviewComponent() {
   const [stripGenerated, setStripGenerated] = useState(false);
   const [isGeneratingGif, setIsGeneratingGif] = useState(false);
   const [frameColor, setFrameColor] = useState("#ffffff"); // Default white frame
+  const [selectedFrame, setSelectedFrame] = useState(null); // Default no frame
 
   // Pastel color palette options
   const colorOptions = [
@@ -44,6 +45,23 @@ function PhotoStripPreviewComponent() {
     { color: "#BDFCC9", name: "Pastel Green" },
     { color: "#FFDAB9", name: "Peach" },
     { color: "#E6E6FA", name: "Lavender" },
+  ];
+
+  // Frame overlay options
+  const frameOptions = [
+    {
+      id: null,
+      name: "No Frame",
+      supportedLayouts: ["a", "b", "c", "d"],
+      imagePath: null,
+    },
+    {
+      id: "lilo_stitch",
+      name: "Lilo & Stitch",
+      supportedLayouts: ["b"], // Only layout B is supported
+      imagePath:
+        "/src/assets/images/frames/lilo_stitch_frames/lilo_stitch_frame_b.png",
+    },
   ];
 
   // Photo strip width based on layout
@@ -133,13 +151,12 @@ function PhotoStripPreviewComponent() {
     if (!hasActiveSession() || !photos || photos.length === 0) {
       navigate({ to: "/" });
     }
-  }, [hasActiveSession, photos, navigate]);
-  // Generate the photo strip when component mounts or frame color changes
+  }, [hasActiveSession, photos, navigate]); // Generate the photo strip when component mounts or frame color changes
   useEffect(() => {
     if (photos && photos.length > 0) {
       generatePhotoStrip();
     }
-  }, [photos, frameColor]);
+  }, [photos, frameColor, selectedFrame]);
 
   // Function to load an image from base64 data
   const loadImage = (src) => {
@@ -256,16 +273,19 @@ function PhotoStripPreviewComponent() {
         ctx.restore();
       }); // Add "little craft" watermark to bottom center
       ctx.save();
+      const rootStyles = getComputedStyle(document.documentElement);
+      const bodyFont = rootStyles.getPropertyValue("--font-family-body").trim();
+      
       // Set watermark font size based on layout
       switch (layout) {
         case "a":
-          ctx.font = "50px Arial";
+          ctx.font = `50px ${bodyFont}`;
           break;
         case "b":
-          ctx.font = "25px Arial";
+          ctx.font = `25px ${bodyFont}`;
           break;
         default:
-          ctx.font = "0px Arial";
+          ctx.font = `0px ${bodyFont}`;
       }
 
       // Determine watermark color based on frame color brightness
@@ -276,13 +296,24 @@ function PhotoStripPreviewComponent() {
         : "rgba(0, 0, 0, 0.3)";
 
       ctx.fillStyle = watermarkColor;
-      const watermarkText = "@LITTLECRAFTSPH";
+      const watermarkText = "@LITTLECRAFTS";
       const watermarkWidth = ctx.measureText(watermarkText).width;
       // Position: center bottom in the padding area
       const watermarkX = canvasWidth / 2 - watermarkWidth / 2;
       const watermarkY = canvasHeight - 40; // Centered in bottom padding
       ctx.fillText(watermarkText, watermarkX, watermarkY);
       ctx.restore();
+
+      // Apply frame overlay if selected
+      if (selectedFrame && selectedFrame.imagePath) {
+        try {
+          const frameImg = await loadImage(selectedFrame.imagePath);
+          // Draw the frame overlay on top of everything
+          ctx.drawImage(frameImg, 0, 0, canvasWidth, canvasHeight);
+        } catch (error) {
+          console.error("Error loading frame image:", error);
+        }
+      }
 
       setStripGenerated(true);
     } catch (error) {
@@ -408,8 +439,36 @@ function PhotoStripPreviewComponent() {
               value={frameColor}
               onChange={(e) => setFrameColor(e.target.value)}
               aria-label="Choose custom frame color"
-            />
+            />{" "}
             <span className="color-value">{frameColor}</span>
+          </div>
+
+          {/* Frame Selector */}
+          <div className="frame-picker-container">
+            <p>Choose Frame:</p>
+            <div className="frame-options">
+              {frameOptions.map((frame) => {
+                const isSupported = frame.supportedLayouts.includes(layout);
+                const isSelected = selectedFrame?.id === frame.id;
+
+                return (
+                  <button
+                    key={frame.id || "no-frame"}
+                    className={`frame-option ${!isSupported ? "disabled" : ""} ${isSelected ? "selected" : ""}`}
+                    disabled={!isSupported}
+                    onClick={() => setSelectedFrame(frame)}
+                    aria-label={`Select ${frame.name} frame`}
+                    title={
+                      !isSupported
+                        ? `${frame.name} is only available for layout ${frame.supportedLayouts.join(", ").toUpperCase()}`
+                        : frame.name
+                    }
+                  >
+                    {frame.name}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
