@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import gifshot from "gifshot";
 import { usePhotoContext } from "../context/PhotoContext";
 import "../assets/css/photo-strip-preview.lazy.css";
+import liloStitchFrameB from "../assets/images/frames/lilo_stitch_frames/lilo_stitch_frame_b.png";
 
 export const Route = createLazyFileRoute("/photo-strip-preview")({
   component: PhotoStripPreviewComponent,
@@ -46,7 +47,6 @@ function PhotoStripPreviewComponent() {
     { color: "#FFDAB9", name: "Peach" },
     { color: "#E6E6FA", name: "Lavender" },
   ];
-
   // Frame overlay options
   const frameOptions = [
     {
@@ -59,8 +59,7 @@ function PhotoStripPreviewComponent() {
       id: "lilo_stitch",
       name: "Lilo & Stitch",
       supportedLayouts: ["b"], // Only layout B is supported
-      imagePath:
-        "/src/assets/images/frames/lilo_stitch_frames/lilo_stitch_frame_b.png",
+      imagePath: liloStitchFrameB,
     },
   ];
 
