@@ -20,7 +20,6 @@ const PrivacyPolicyLazyImport = createFileRoute('/privacy-policy')()
 const PhotoboothLazyImport = createFileRoute('/photobooth')()
 const PhotoStripPreviewLazyImport = createFileRoute('/photo-strip-preview')()
 const FaqLazyImport = createFileRoute('/faq')()
-const ContactLazyImport = createFileRoute('/contact')()
 const AboutLazyImport = createFileRoute('/about')()
 const IndexLazyImport = createFileRoute('/')()
 
@@ -54,12 +53,6 @@ const FaqLazyRoute = FaqLazyImport.update({
   getParentRoute: () => rootRoute,
 } as any).lazy(() => import('./routes/faq.lazy').then((d) => d.Route))
 
-const ContactLazyRoute = ContactLazyImport.update({
-  id: '/contact',
-  path: '/contact',
-  getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/contact.lazy').then((d) => d.Route))
-
 const AboutLazyRoute = AboutLazyImport.update({
   id: '/about',
   path: '/about',
@@ -88,13 +81,6 @@ declare module '@tanstack/react-router' {
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof AboutLazyImport
-      parentRoute: typeof rootRoute
-    }
-    '/contact': {
-      id: '/contact'
-      path: '/contact'
-      fullPath: '/contact'
-      preLoaderRoute: typeof ContactLazyImport
       parentRoute: typeof rootRoute
     }
     '/faq': {
@@ -133,7 +119,6 @@ declare module '@tanstack/react-router' {
 export interface FileRoutesByFullPath {
   '/': typeof IndexLazyRoute
   '/about': typeof AboutLazyRoute
-  '/contact': typeof ContactLazyRoute
   '/faq': typeof FaqLazyRoute
   '/photo-strip-preview': typeof PhotoStripPreviewLazyRoute
   '/photobooth': typeof PhotoboothLazyRoute
@@ -143,7 +128,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexLazyRoute
   '/about': typeof AboutLazyRoute
-  '/contact': typeof ContactLazyRoute
   '/faq': typeof FaqLazyRoute
   '/photo-strip-preview': typeof PhotoStripPreviewLazyRoute
   '/photobooth': typeof PhotoboothLazyRoute
@@ -154,7 +138,6 @@ export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexLazyRoute
   '/about': typeof AboutLazyRoute
-  '/contact': typeof ContactLazyRoute
   '/faq': typeof FaqLazyRoute
   '/photo-strip-preview': typeof PhotoStripPreviewLazyRoute
   '/photobooth': typeof PhotoboothLazyRoute
@@ -166,7 +149,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
-    | '/contact'
     | '/faq'
     | '/photo-strip-preview'
     | '/photobooth'
@@ -175,7 +157,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
-    | '/contact'
     | '/faq'
     | '/photo-strip-preview'
     | '/photobooth'
@@ -184,7 +165,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/about'
-    | '/contact'
     | '/faq'
     | '/photo-strip-preview'
     | '/photobooth'
@@ -195,7 +175,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexLazyRoute: typeof IndexLazyRoute
   AboutLazyRoute: typeof AboutLazyRoute
-  ContactLazyRoute: typeof ContactLazyRoute
   FaqLazyRoute: typeof FaqLazyRoute
   PhotoStripPreviewLazyRoute: typeof PhotoStripPreviewLazyRoute
   PhotoboothLazyRoute: typeof PhotoboothLazyRoute
@@ -205,7 +184,6 @@ export interface RootRouteChildren {
 const rootRouteChildren: RootRouteChildren = {
   IndexLazyRoute: IndexLazyRoute,
   AboutLazyRoute: AboutLazyRoute,
-  ContactLazyRoute: ContactLazyRoute,
   FaqLazyRoute: FaqLazyRoute,
   PhotoStripPreviewLazyRoute: PhotoStripPreviewLazyRoute,
   PhotoboothLazyRoute: PhotoboothLazyRoute,
@@ -224,7 +202,6 @@ export const routeTree = rootRoute
       "children": [
         "/",
         "/about",
-        "/contact",
         "/faq",
         "/photo-strip-preview",
         "/photobooth",
@@ -236,9 +213,6 @@ export const routeTree = rootRoute
     },
     "/about": {
       "filePath": "about.lazy.jsx"
-    },
-    "/contact": {
-      "filePath": "contact.lazy.jsx"
     },
     "/faq": {
       "filePath": "faq.lazy.jsx"

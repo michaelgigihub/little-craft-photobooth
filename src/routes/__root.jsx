@@ -78,9 +78,6 @@ export const Route = createRootRoute({
             <Link to="/faq" className="nav-link" onClick={handleLinkClick}>
               FAQ
             </Link>
-            <Link to="/contact" className="nav-link" onClick={handleLinkClick}>
-              Contact
-            </Link>
           </nav>
         </div>
         <div className="content-container">

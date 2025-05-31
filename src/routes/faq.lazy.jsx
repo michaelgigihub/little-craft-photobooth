@@ -1,9 +1,15 @@
-import { createLazyFileRoute } from '@tanstack/react-router'
+import { createLazyFileRoute } from "@tanstack/react-router";
+import Footer from "../components/Footer";
 
-export const Route = createLazyFileRoute('/faq')({
+export const Route = createLazyFileRoute("/faq")({
   component: RouteComponent,
-})
+});
 
 function RouteComponent() {
-  return <div>Hello "/faq"!</div>
+  return (
+    <div className="page-container">
+      <div>Hello "/faq"!</div>
+      <Footer />
+    </div>
+  );
 }

@@ -5,6 +5,7 @@ import layoutAImage from "../assets/images/layout-a.png";
 import layoutBImage from "../assets/images/layout-b.png";
 import layoutCImage from "../assets/images/layout-c.png";
 import layoutDImage from "../assets/images/layout-d.png";
+import Footer from "../components/Footer";
 
 export const Route = createLazyFileRoute("/")({
   component: Index,
@@ -48,35 +49,38 @@ function Index() {
   };
 
   return (
-    <div className="p-2">
-      <h2>Choose your layout!</h2>
-      <p>
-        Please select a layout for your photo strip. Don't forget to smile and
-        have fun!
-      </p>
-      <div className="layout-container">
-        {layouts.map((layout) => (
-          <div className="layout-item" key={layout.id}>
-            <button
-              onClick={() => handleLayoutSelect(layout)}
-              className="layout-link"
-              style={{
-                border: "none",
-                background: "none",
-                cursor: "pointer",
-                padding: 0,
-              }}
-            >
-              <img
-                className="layout-image"
-                src={layout.image}
-                alt={layout.alt}
-              />
-              <div className="layout-info">{layout.photoCount} Photos</div>
-            </button>
-          </div>
-        ))}
+    <div className="page-container">
+      <div className="p-2">
+        <h2>Choose your layout!</h2>
+        <p>
+          Please select a layout for your photo strip. Don't forget to smile and
+          have fun!
+        </p>
+        <div className="layout-container">
+          {layouts.map((layout) => (
+            <div className="layout-item" key={layout.id}>
+              <button
+                onClick={() => handleLayoutSelect(layout)}
+                className="layout-link"
+                style={{
+                  border: "none",
+                  background: "none",
+                  cursor: "pointer",
+                  padding: 0,
+                }}
+              >
+                <img
+                  className="layout-image"
+                  src={layout.image}
+                  alt={layout.alt}
+                />
+                <div className="layout-info">{layout.photoCount} Photos</div>
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
+      <Footer />
     </div>
   );
 }

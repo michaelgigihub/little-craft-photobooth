@@ -13,6 +13,7 @@
 
   --font-family-primary: "Vintage Goods", serif;
   --font-family-body: "Ovo", sans-serif;
+  --title-font-size: 2.5rem;
   --spacing: 1rem;
 }
 
@@ -57,4 +58,14 @@ h4,
 h5,
 h6 {
   font-family: var(--font-family-primary);
+}
+
+h2{
+  font-size: var(--title-font-size)
+}
+
+@media (max-width: 768px) {
+  h2 {
+    margin-top: 2rem;
+  }
 }

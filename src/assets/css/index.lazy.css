@@ -36,7 +36,7 @@
 .layout-image {
   max-width: 100%;
   height: auto;
-  max-height: 40vh;
+  max-height: 50vh;
   object-fit: contain;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -54,17 +54,10 @@ h2,
 p {
   text-align: center;
 }
-
 p {
   margin-bottom: 2rem;
   font-size: 1.1rem;
   font-weight: bold;
-}
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  h2 {
-    margin-top: 1.5rem;
-  }
 }
 
 @media (max-width: 576px) {
