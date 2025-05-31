@@ -27,7 +27,7 @@ function PhotoboothComponent() {
     return (
       <div className="photobooth-container">
         <h2>Redirecting...</h2>
-        <p>Setting up photo booth session...</p>
+        <p>Setting up Photobooth session...</p>
       </div>
     );
   }
@@ -401,7 +401,7 @@ function PhotoboothComponent() {
   };
   return (
     <div className="photobooth-container">
-      <h2>Photo Booth</h2>
+      <h2>Photobooth</h2>
       <div className="photo-count-info">
         Layout: {layout.toUpperCase()} - {photoCount} photos
       </div>

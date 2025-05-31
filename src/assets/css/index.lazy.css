@@ -50,8 +50,23 @@
   border-radius: 4px;
   font-weight: bold;
 }
+h2,
+p {
+  text-align: center;
+}
 
+p {
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
 /* Responsive adjustments */
+@media (max-width: 768px) {
+  h2 {
+    margin-top: 1.5rem;
+  }
+}
+
 @media (max-width: 576px) {
   .layout-container {
     gap: 1rem;

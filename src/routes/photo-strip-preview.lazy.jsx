@@ -4,29 +4,13 @@ import gifshot from "gifshot";
 import { usePhotoContext } from "../context/PhotoContext";
 import "../assets/css/photo-strip-preview.lazy.css";
 import liloStitchFrameB from "../assets/images/frames/lilo_stitch_frames/lilo_stitch_frame_b.png";
+import { downloadAsJPEG } from "../assets/javascript/downloadJpeg.js";
+import { downloadAsGIF } from "../assets/javascript/downloadGif.js";
+import { generatePhotoStrip } from "../assets/javascript/generatePhotoStrip.js";
 
 export const Route = createLazyFileRoute("/photo-strip-preview")({
   component: PhotoStripPreviewComponent,
 });
-
-// Function to determine if a color is dark or light
-// Returns true if the color is dark, false if it's light
-const isColorDark = (hexColor) => {
-  // Remove the # if it exists
-  const hex = hexColor.replace("#", "");
-
-  // Convert hex to RGB
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-
-  // Calculate luminance - using the formula for relative luminance in the sRGB color space
-  // See: https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-
-  // Return true if dark (luminance less than 0.5), false if light
-  return luminance < 0.5;
-};
 
 function PhotoStripPreviewComponent() {
   const navigate = useNavigate();
@@ -144,29 +128,36 @@ function PhotoStripPreviewComponent() {
     resetSession();
     navigate({ to: "/" });
   };
-
   // Redirect to home if no session is active or no photos captured
   useEffect(() => {
     if (!hasActiveSession() || !photos || photos.length === 0) {
       navigate({ to: "/" });
     }
-  }, [hasActiveSession, photos, navigate]); // Generate the photo strip when component mounts or frame color changes
+  }, [hasActiveSession, photos, navigate]);
+
+  // Generate the photo strip when component mounts or frame color changes
   useEffect(() => {
     if (photos && photos.length > 0) {
-      generatePhotoStrip();
+      handleGeneratePhotoStrip();
     }
   }, [photos, frameColor, selectedFrame]);
-
-  // Function to load an image from base64 data
-  const loadImage = (src) => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = reject;
-      img.src = src;
+  // Wrapper function to call the external generatePhotoStrip function
+  const handleGeneratePhotoStrip = async () => {
+    await generatePhotoStrip({
+      canvas: canvasRef.current,
+      photos,
+      layout,
+      frameColor,
+      selectedFrame,
+      canvasWidth,
+      canvasHeight,
+      stripWidth,
+      canvasPadding,
+      photoSidePad,
+      photoGap,
+      setStripGenerated,
     });
   };
-
   // Early return check - must be AFTER all hooks have been called
   if (!hasActiveSession() || !photos || photos.length === 0) {
     return (
@@ -177,224 +168,13 @@ function PhotoStripPreviewComponent() {
     );
   }
 
-  // Function to generate the photo strip on canvas
-  const generatePhotoStrip = async () => {
-    const canvas = canvasRef.current;
-    if (!canvas || !photos) return;
-
-    const ctx = canvas.getContext("2d");
-    canvas.width = canvasWidth;
-    canvas.height = canvasHeight;
-
-    // Enable high-quality rendering
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = "high"; // Set background color to selected frame color
-    ctx.fillStyle = frameColor;
-    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-    try {
-      // Load all images
-      const images = await Promise.all(photos.map(loadImage)); // Calculate layout dimensions based on selected layout
-      let photoWidth, photoHeight, cols, rows;
-
-      switch (layout) {
-        case "a": // 4 photos, 1 per row (standard 2:6 strip)
-          cols = 1;
-          rows = 4;
-          photoWidth = stripWidth - canvasPadding.left * 2;
-          // For 2:6 ratio strip, distribute height evenly among 4 photos plus margins
-          photoHeight = (3 / 4) * photoWidth; //to make it 4:3 aspect ratio base on the photo width
-          break;
-        case "b": // 3 photos, 1 per row (standard 2:6 strip)
-          cols = 1;
-          rows = 3;
-          photoWidth = stripWidth - canvasPadding.left * 2; // fix size considering the side margins
-          photoHeight = (3 / 4) * photoWidth;
-          break;
-        case "c": // 2 photos, 1 per row (shorter strip)
-          cols = 1;
-          rows = 2;
-          photoWidth = stripWidth - photoSidePad * 2;
-          photoHeight = (photoWidth * 3) / 4; // Maintain 4:3 aspect ratio
-          break;
-        case "d": // 6 photos, 2 per row (3 rows)
-          cols = 2;
-          rows = 3;
-          photoWidth = (stripWidth - photoSidePad * 3) / 2;
-          photoHeight = (photoWidth * 3) / 4; // Maintain 4:3 aspect ratio
-          break;
-        default:
-          cols = 1;
-          rows = 4;
-          photoWidth = stripWidth - photoSidePad * 2;
-          photoHeight = (stripHeight - photoSidePad * 5) / 4;
-      } // Draw photos in the grid
-      images.forEach((img, index) => {
-        if (index >= cols * rows) return; // Don't draw more photos than the layout supports
-
-        const col = index % cols;
-        const row = Math.floor(index / cols);
-
-        const x = canvasPadding.left + col * (photoWidth + photoGap);
-        const y = canvasPadding.top + row * (photoHeight + photoGap);
-
-        // Since we already cropped the image to 4:3 during capture, we should maintain that ratio
-        const imgAspect = img.width / img.height;
-        const frameAspect = photoWidth / photoHeight;
-
-        let drawWidth = photoWidth;
-        let drawHeight = photoHeight;
-        let offsetX = 0;
-        let offsetY = 0;
-
-        // The image should already be 4:3, but handle any slight variations
-        if (Math.abs(imgAspect - frameAspect) > 0.01) {
-          if (imgAspect > frameAspect) {
-            // Image is slightly wider than frame - center crop
-            drawHeight = photoHeight;
-            drawWidth = photoHeight * imgAspect;
-            offsetX = (photoWidth - drawWidth) / 2;
-          } else {
-            // Image is slightly taller than frame - center crop
-            drawWidth = photoWidth;
-            drawHeight = photoWidth / imgAspect;
-            offsetY = (photoHeight - drawHeight) / 2;
-          }
-        }
-
-        // Clip to photo area to prevent overflow
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(x, y, photoWidth, photoHeight);
-        ctx.clip();
-
-        // Draw the image (already flipped during capture, so no need to flip again)
-        ctx.drawImage(img, x + offsetX, y + offsetY, drawWidth, drawHeight);
-        ctx.restore();
-      }); // Add "little craft" watermark to bottom center
-      ctx.save();
-      const rootStyles = getComputedStyle(document.documentElement);
-      const bodyFont = rootStyles.getPropertyValue("--font-family-body").trim();
-      
-      // Set watermark font size based on layout
-      switch (layout) {
-        case "a":
-          ctx.font = `50px ${bodyFont}`;
-          break;
-        case "b":
-          ctx.font = `25px ${bodyFont}`;
-          break;
-        default:
-          ctx.font = `0px ${bodyFont}`;
-      }
-
-      // Determine watermark color based on frame color brightness
-      const isDark = isColorDark(frameColor);
-      // Use white for dark backgrounds, semi-transparent black for light backgrounds
-      const watermarkColor = isDark
-        ? "rgba(255, 255, 255, 0.3)"
-        : "rgba(0, 0, 0, 0.3)";
-
-      ctx.fillStyle = watermarkColor;
-      const watermarkText = "@LITTLECRAFTS";
-      const watermarkWidth = ctx.measureText(watermarkText).width;
-      // Position: center bottom in the padding area
-      const watermarkX = canvasWidth / 2 - watermarkWidth / 2;
-      const watermarkY = canvasHeight - 40; // Centered in bottom padding
-      ctx.fillText(watermarkText, watermarkX, watermarkY);
-      ctx.restore();
-
-      // Apply frame overlay if selected
-      if (selectedFrame && selectedFrame.imagePath) {
-        try {
-          const frameImg = await loadImage(selectedFrame.imagePath);
-          // Draw the frame overlay on top of everything
-          ctx.drawImage(frameImg, 0, 0, canvasWidth, canvasHeight);
-        } catch (error) {
-          console.error("Error loading frame image:", error);
-        }
-      }
-
-      setStripGenerated(true);
-    } catch (error) {
-      console.error("Error generating photo strip:", error);
-    }
+  // Handler functions for downloads
+  const handleDownloadJPEG = () => {
+    downloadAsJPEG(canvasRef.current, layout);
   };
 
-  // Function to download as JPEG
-  const downloadAsJPEG = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const link = document.createElement("a");
-    link.download = `photo-strip-${layout}-${Date.now()}.jpg`;
-    link.href = canvas.toDataURL("image/jpeg", 1.0); // Maximum quality
-    link.click();
-  }; // Function to download as GIF
-  const downloadAsGIF = async () => {
-    if (!photos || photos.length === 0) return;
-
-    setIsGeneratingGif(true);
-
-    try {
-      // Process photos to ensure consistent quality and format
-      const processedImages = await Promise.all(
-        photos.map(async (photo) => {
-          return new Promise((resolve) => {
-            // Create a temporary canvas for each image to ensure consistent sizing
-            const tempCanvas = document.createElement("canvas");
-            const tempCtx = tempCanvas.getContext("2d");
-            tempCanvas.width = 1200; // High resolution for GIF
-            tempCanvas.height = 900; // 4:3 aspect ratio
-
-            // Enable high-quality rendering
-            tempCtx.imageSmoothingEnabled = true;
-            tempCtx.imageSmoothingQuality = "high";
-
-            const img = new Image();
-            img.onload = () => {
-              // Draw the image to the canvas with consistent sizing
-              tempCtx.drawImage(img, 0, 0, 1200, 900);
-              resolve(tempCanvas.toDataURL("image/jpeg", 0.95)); // High quality JPEG for GIF frames
-            };
-            img.src = photo;
-          });
-        })
-      );
-
-      gifshot.createGIF(
-        {
-          images: processedImages,
-          gifWidth: 1200, // Higher resolution
-          gifHeight: 900, // 4:3 aspect ratio
-          //interval: 0.5, // 0.5 seconds per frame
-          numFrames: photos.length,
-          frameDuration: 3,
-          fontWeight: "normal",
-          fontSize: "24px", // Scaled up font
-          fontFamily: "sans-serif",
-          fontColor: "#ffffff",
-          quality: 10, // Maximum quality (1-10 scale)
-          sampleInterval: 10, // Lower sample interval for better quality
-        },
-        (obj) => {
-          setIsGeneratingGif(false);
-
-          if (!obj.error) {
-            const link = document.createElement("a");
-            link.download = `photo-strip-${layout}-${Date.now()}.gif`;
-            link.href = obj.image;
-            link.click();
-          } else {
-            console.error("Error creating GIF:", obj.error);
-            alert("Error creating GIF. Please try again.");
-          }
-        }
-      );
-    } catch (error) {
-      console.error("Error processing images for GIF:", error);
-      setIsGeneratingGif(false);
-      alert("Error processing images for GIF. Please try again.");
-    }
+  const handleDownloadGIF = () => {
+    downloadAsGIF(photos, layout, setIsGeneratingGif);
   };
 
   return (
@@ -473,13 +253,16 @@ function PhotoStripPreviewComponent() {
       </div>
       {stripGenerated && (
         <div className="download-controls">
-          <h3>Download Your Photo Strip</h3>
+          <h3>Download Your Photo Strip</h3>{" "}
           <div className="download-buttons">
-            <button onClick={downloadAsJPEG} className="action-btn download">
+            <button
+              onClick={handleDownloadJPEG}
+              className="action-btn download"
+            >
               Download as JPEG
             </button>
             <button
-              onClick={downloadAsGIF}
+              onClick={handleDownloadGIF}
               disabled={isGeneratingGif}
               className="action-btn download"
             >

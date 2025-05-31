@@ -57,23 +57,38 @@
 .hamburger {
   display: none;
   flex-direction: column;
-  justify-content: space-between;
-  width: 30px;
-  height: 21px;
+  justify-content: center;
+  align-items: center;
+  width: 48px; /* Increased from 30px for larger touch target */
+  height: 48px; /* Increased from 21px for larger touch target */
   cursor: pointer;
   margin-right: 10px;
   z-index: 200;
+  padding: 12px; /* Add padding for larger clickable area */
+  border-radius: 8px; /* Add slight border radius for better UX */
+  transition: background-color 0.2s ease;
+  /* Ensure minimum touch target size for accessibility */
+  min-width: 44px;
+  min-height: 44px;
+  -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+}
+
+/* Improve hamburger lines spacing */
+.hamburger {
+  gap: 4px; /* Add gap between hamburger lines */
 }
 
 .hamburger span {
-  width: 100%;
+  width: 24px; /* Fixed width for the hamburger lines */
   height: 3px;
   background-color: #2e3f59;
   border-radius: 3px;
   transition: all 0.3s ease;
+  display: block;
 }
+
 .hamburger.active span:nth-child(1) {
-  transform: translateY(9px) rotate(45deg);
+  transform: translateY(7px) rotate(45deg);
   background-color: #ffffff;
 }
 
@@ -82,7 +97,7 @@
 }
 
 .hamburger.active span:nth-child(3) {
-  transform: translateY(-9px) rotate(-45deg);
+  transform: translateY(-7px) rotate(-45deg);
   background-color: #ffffff;
 }
 
@@ -110,12 +125,11 @@
     max-height: 300px;
     padding: 0.75rem 1.5rem;
   }
-
   .hamburger {
     display: flex;
     position: absolute;
-    top: 1.5rem;
-    right: 1.5rem;
+    top: 0.75rem; /* Adjusted for larger hamburger */
+    right: 0.75rem; /* Adjusted for larger hamburger */
   }
 
   .menu-container {
@@ -124,11 +138,14 @@
     justify-content: center;
     position: relative;
   }
-
   .nav-link {
     margin: 0.5rem 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     width: 100%;
     text-align: center;
+    box-sizing: border-box;
   }
 }
 

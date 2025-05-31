@@ -49,7 +49,7 @@ function Index() {
 
   return (
     <div className="p-2">
-      <h3>Choose your layout!</h3>
+      <h2>Choose your layout!</h2>
       <p>
         Please select a layout for your photo strip. Don't forget to smile and
         have fun!

@@ -63,7 +63,7 @@ export const Route = createRootRoute({
           </div>
           <nav className={`navbar ${menuOpen ? "active" : ""}`}>
             <Link to="/" className="nav-link" onClick={handleLinkClick}>
-              Home
+              Photobooth
             </Link>
             <Link to="/about" className="nav-link" onClick={handleLinkClick}>
               About
