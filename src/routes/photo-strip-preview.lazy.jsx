@@ -1,6 +1,5 @@
 import { createLazyFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import gifshot from "gifshot";
 import { usePhotoContext } from "../context/PhotoContext";
 import "../assets/css/photo-strip-preview.lazy.css";
 import "../assets/css/footer.css";
@@ -66,25 +65,13 @@ function PhotoStripPreviewComponent() {
 
   const stripWidth = getStripWidth();
 
-  const getSidePhotoPad = () => {
-    switch (layout) {
-      case "a":
-        return 60; // Layout A: 1200px width
-      case "b":
-        return 30; // Layout B: 600px width
-      default:
-        return 0; // Default: 0px (to be determined for layouts C and D)
-    }
-  };
-  const photoSidePad = getSidePhotoPad(); // Margin between photos
-
   const getPhotoGap = () => {
     switch (layout) {
       case "a":
         return 30;
       case "b":
-      case "c":
         return 60;
+      case "c":
       case "d":
         return 40;
       default:
@@ -101,6 +88,9 @@ function PhotoStripPreviewComponent() {
       break;
     case "b":
       canvasPadding = { top: 80, left: 30 };
+      break;
+    case "c":
+      canvasPadding = { top: 60, left: 30 };
       break;
     case "d":
       canvasPadding = { top: 70, left: 97 };
@@ -158,7 +148,6 @@ function PhotoStripPreviewComponent() {
       canvasHeight,
       stripWidth,
       canvasPadding,
-      photoSidePad,
       photoGap,
       setStripGenerated,
     });

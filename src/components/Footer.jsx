@@ -12,10 +12,16 @@ function Footer() {
         <div className="contact-item">
           <Phone size={18} style={{ color: "var(--color-primary)" }} />
           <span>+63 917 772 1157</span>
-        </div>
+        </div>{" "}
         <div className="contact-item">
           <Mail size={18} style={{ color: "var(--color-primary)" }} />
-          <span>@wrt.twice@yahoo.com</span>
+          <a
+            href="mailto:wrt.twice@yahoo.com"
+            className="footer-email"
+            aria-label="Email us"
+          >
+            wrt.twice@yahoo.com
+          </a>
         </div>
       </div>
       <div className="footer-social">
@@ -38,7 +44,7 @@ function Footer() {
           </svg>
         </a>
         <a
-          href="https://facebook.com/littlecrafts"
+          href="https://www.tiktok.com/@nicxsimang?is_from_webapp=1&sender_device=pc"
           target="_blank"
           rel="noopener noreferrer"
           className="social-link"

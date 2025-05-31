@@ -114,14 +114,7 @@ function PhotoboothComponent() {
       const devices = await navigator.mediaDevices.enumerateDevices();
       const videoInputs = devices.filter(
         (device) => device.kind === "videoinput"
-      );
-
-      // Check if we have both front and rear cameras
-      const hasFront = videoInputs.some(
-        (device) =>
-          device.label.toLowerCase().includes("front") ||
-          device.label.toLowerCase().includes("user")
-      );
+      ); // Check if we have rear cameras
       const hasRear = videoInputs.some(
         (device) =>
           device.label.toLowerCase().includes("back") ||
@@ -135,7 +128,6 @@ function PhotoboothComponent() {
 
       console.log("Available cameras after permission granted:", {
         total: videoInputs.length,
-        hasFront,
         hasRear: hasRear || hasMultipleCameras,
         devices: videoInputs.map((d) => ({
           label: d.label,
@@ -164,13 +156,7 @@ function PhotoboothComponent() {
         const hasLabels = videoInputs.some(
           (device) => device.label && device.label.trim() !== ""
         );
-
         if (hasLabels) {
-          const hasFront = videoInputs.some(
-            (device) =>
-              device.label.toLowerCase().includes("front") ||
-              device.label.toLowerCase().includes("user")
-          );
           const hasRear = videoInputs.some(
             (device) =>
               device.label.toLowerCase().includes("back") ||
@@ -376,7 +362,6 @@ function PhotoboothComponent() {
       navigate({ to: "/photo-strip-preview" });
     }
   }, [photoSession.photos, photoCount, navigate]);
-
   // Reset the captures
   const resetCaptures = () => {
     clearPhotos();
@@ -384,33 +369,22 @@ function PhotoboothComponent() {
     setCountdown(null);
   };
 
-  // Determine layout class for the grid
-  const getLayoutClass = () => {
-    switch (layout) {
-      case "a":
-        return "layout-a";
-      case "b":
-        return "layout-b";
-      case "c":
-        return "layout-c";
-      case "d":
-        return "layout-d";
-      default:
-        return "layout-a";
-    }
-  };
   return (
     <div className="photobooth-container">
       <h2>Photobooth</h2>
       <div className="photo-count-info">
         Layout: {layout.toUpperCase()} - {photoCount} photos
-      </div>
-
+      </div>{" "}
       {photoSession.photos.length < photoCount && (
         <div className="webcam-preview-container">
-          {" "}
+          {!webcamReady && !webcamError && (
+            <div className="webcam-loading">
+              <p style={{ textAlign: "center", margin: "10px 0" }}>
+                Loading camera...
+              </p>
+            </div>
+          )}{" "}
           <div className="webcam-container">
-            {" "}
             <Webcam
               audio={false}
               ref={webcamRef}
@@ -421,13 +395,14 @@ function PhotoboothComponent() {
               className="webcam-video"
               style={{
                 transform: shouldFlipVideo() ? "scaleX(-1)" : "scaleX(1)",
+                opacity: webcamReady ? 1 : 0.5,
               }}
               onUserMedia={handleWebcamReady}
               onUserMediaError={handleWebcamError}
-            />
+            />{" "}
             {countdown !== null && countdown >= 0 && (
               <div className="counter">{countdown}</div>
-            )}{" "}
+            )}
             {/* Camera switch button */}
             <button
               className={`camera-switch-btn ${!hasRearCamera || countdown === 0 || capturing ? "disabled" : ""}`}
@@ -459,7 +434,6 @@ function PhotoboothComponent() {
           )}
         </div>
       )}
-
       {photoSession.photos.length < photoCount && !capturing && (
         <div className="countdown-selector">
           <p>Select Countdown Time</p>
@@ -488,16 +462,20 @@ function PhotoboothComponent() {
           </div>
         </div>
       )}
-
       <div className="controls">
+        {" "}
         {photoSession.photos.length < photoCount ? (
           <button
             className="capture-btn"
             onClick={startCapturing}
-            disabled={capturing}
+            disabled={capturing || !webcamReady || !!webcamError}
           >
             {photoSession.photos.length === 0
-              ? "Start Taking Photos"
+              ? !webcamReady
+                ? "Preparing camera..."
+                : webcamError
+                  ? "Camera unavailable"
+                  : "Start Taking Photos"
               : capturing
                 ? `Capturing in progress...`
                 : `Continue Photo Session (${photoSession.photos.length}/${photoCount} taken)`}
@@ -507,7 +485,6 @@ function PhotoboothComponent() {
             Reset & Take New Photos
           </button>
         )}
-
         {capturing && (
           <p className="capturing-status">
             Taking photo {photoSession.photos.length + 1} of {photoCount}

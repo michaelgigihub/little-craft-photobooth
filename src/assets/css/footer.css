@@ -48,6 +48,18 @@
   transform: scale(1.1);
 }
 
+.footer-email {
+  color: var(--color-text-on-primary-black);
+  text-decoration: none;
+  transition: color 0.2s ease;
+  font-weight: 400;
+}
+
+.footer-email:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
 /* Page container for proper footer positioning */
 .page-container {
   display: flex;

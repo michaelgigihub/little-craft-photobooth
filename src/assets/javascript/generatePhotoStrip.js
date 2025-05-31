@@ -38,7 +38,6 @@ export const generatePhotoStrip = async ({
   canvasHeight,
   stripWidth,
   canvasPadding,
-  photoSidePad,
   photoGap,
   setStripGenerated,
 }) => {
@@ -77,13 +76,13 @@ export const generatePhotoStrip = async ({
         photoWidth = stripWidth - canvasPadding.left * 2; // fix size considering the side margins
         photoHeight = (3 / 4) * photoWidth;
         break;
-      case "c": // 2 photos, 4:6 ratio
+      case "c": // 2 photos, 2:6 ratio
         cols = 1;
         rows = 2;
-        photoWidth = stripWidth - canvasPadding.left * 2;
-        photoHeight = (3 / 4) * photoWidth; // Maintain 4:3 aspect ratio
+        photoWidth = 540;
+        photoHeight = 713; // Maintain 4:3 aspect ratio
         break;
-      case "d": // 2 photos, 2:6 ratio
+      case "d": // 2 photos, 4:6 ratio
         cols = 1;
         rows = 2;
         photoWidth = stripWidth - canvasPadding.left * 2;
@@ -92,8 +91,6 @@ export const generatePhotoStrip = async ({
       default:
         cols = 1;
         rows = 4;
-        photoWidth = stripWidth - photoSidePad * 2;
-        photoHeight = (canvasHeight - photoSidePad * 5) / 4;
     }
 
     // Draw photos in the grid
@@ -153,6 +150,7 @@ export const generatePhotoStrip = async ({
         ctx.font = `50px ${bodyFont}`;
         break;
       case "b": // 3 strips (2:6)
+      case "c": // 2 strips (2:6)
         ctx.font = `25px ${bodyFont}`;
         break;
       default:
