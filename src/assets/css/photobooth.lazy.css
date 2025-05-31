@@ -31,6 +31,12 @@
   flex: 3;
 }
 
+/* Special styling for layout C - 540:713 ratio */
+.webcam-container.layout-c {
+  aspect-ratio: 540/713; /* Approximately 0.757:1 */
+  max-width: 540px;
+}
+
 /* New style for the preview image container */
 .preview-container {
   flex: 1;

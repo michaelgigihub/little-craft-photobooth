@@ -51,35 +51,43 @@ function PhotoboothComponent() {
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
       navigator.userAgent
     );
-
   // Set up webcam constraints for better quality and mobile compatibility
   const getVideoConstraints = () => {
+    // Calculate aspect ratio based on layout
+    const aspectRatio = layout === "c" ? 540 / 713 : 4 / 3;
+
     if (isMobile) {
       return {
         width: { ideal: 1920, min: 640 },
-        height: { ideal: 1440, min: 480 },
+        height: { ideal: layout === "c" ? 2534 : 1440, min: 480 },
         facingMode: facingMode, // Use state variable
-        aspectRatio: { ideal: 4 / 3 },
+        aspectRatio: { ideal: aspectRatio },
         frameRate: { ideal: 30, min: 15 },
         // Mobile-specific optimizations
         advanced: [
           { width: { min: 640, ideal: 1920, max: 1920 } },
-          { height: { min: 480, ideal: 1440, max: 1440 } },
-          { aspectRatio: { ideal: 4 / 3 } },
+          {
+            height: {
+              min: 480,
+              ideal: layout === "c" ? 2534 : 1440,
+              max: layout === "c" ? 2534 : 1440,
+            },
+          },
+          { aspectRatio: { ideal: aspectRatio } },
           { frameRate: { ideal: 30 } },
         ],
       };
     } else {
       return {
         width: { ideal: 1920, min: 640 },
-        height: { ideal: 1440, min: 480 },
+        height: { ideal: layout === "c" ? 2534 : 1440, min: 480 },
         facingMode: facingMode, // Use state variable
-        aspectRatio: { ideal: 4 / 3 },
+        aspectRatio: { ideal: aspectRatio },
         frameRate: { ideal: 30, min: 15 },
         advanced: [
           { width: { min: 1280 } },
-          { height: { min: 960 } },
-          { aspectRatio: { exact: 4 / 3 } },
+          { height: { min: layout === "c" ? 1690 : 960 } },
+          { aspectRatio: { exact: aspectRatio } },
         ],
       };
     }
@@ -197,8 +205,7 @@ function PhotoboothComponent() {
       facingMode === "user" ? "environment" : "user"
     );
   }, [hasRearCamera, countdown, facingMode, capturing]);
-
-  // Function to capture a photo with maximum quality and proper 4:3 cropping
+  // Function to capture a photo with maximum quality and proper aspect ratio cropping
   const capturePhoto = useCallback(() => {
     if (webcamRef.current) {
       // Get the webcam video element to check its actual dimensions
@@ -211,13 +218,25 @@ function PhotoboothComponent() {
         aspectRatio: video.videoWidth / video.videoHeight,
       });
 
-      // Create a canvas to properly crop the image to 4:3 aspect ratio
+      // Create a canvas to properly crop the image
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
 
-      // Set high resolution for the canvas (4:3 aspect ratio)
-      const targetWidth = 1920;
-      const targetHeight = 1440; // 4:3 ratio
+      // Set canvas dimensions based on layout
+      let targetWidth, targetHeight, targetAspect;
+
+      if (layout === "c") {
+        // Layout C uses 540:713 aspect ratio
+        targetWidth = 1620; // 3x scale of 540 for high quality
+        targetHeight = 2139; // 3x scale of 713 for high quality
+        targetAspect = 540 / 713;
+      } else {
+        // Other layouts use 4:3 aspect ratio
+        targetWidth = 1920;
+        targetHeight = 1440;
+        targetAspect = 4 / 3;
+      }
+
       canvas.width = targetWidth;
       canvas.height = targetHeight;
 
@@ -225,9 +244,8 @@ function PhotoboothComponent() {
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
 
-      // Calculate the crop area to maintain 4:3 aspect ratio from the video
+      // Calculate the crop area to maintain target aspect ratio from the video
       const videoAspect = video.videoWidth / video.videoHeight;
-      const targetAspect = 4 / 3;
 
       let sourceX = 0,
         sourceY = 0,
@@ -235,11 +253,11 @@ function PhotoboothComponent() {
         sourceHeight = video.videoHeight;
 
       if (videoAspect > targetAspect) {
-        // Video is wider than 4:3, crop the sides
+        // Video is wider than target, crop the sides
         sourceWidth = video.videoHeight * targetAspect;
         sourceX = (video.videoWidth - sourceWidth) / 2;
       } else {
-        // Video is taller than 4:3, crop top and bottom
+        // Video is taller than target, crop top and bottom
         sourceHeight = video.videoWidth / targetAspect;
         sourceY = (video.videoHeight - sourceHeight) / 2;
       }
@@ -249,6 +267,8 @@ function PhotoboothComponent() {
         sourceWidth,
         sourceHeight,
         cropAspect: sourceWidth / sourceHeight,
+        layout,
+        targetAspect,
       });
 
       // Draw the cropped video frame to match what's shown in the preview
@@ -304,6 +324,7 @@ function PhotoboothComponent() {
     photoCount,
     isMobile,
     facingMode,
+    layout,
   ]);
 
   // Function to handle single countdown and photo capture
@@ -384,7 +405,9 @@ function PhotoboothComponent() {
               </p>
             </div>
           )}{" "}
-          <div className="webcam-container">
+          <div
+            className={`webcam-container ${layout === "c" ? "layout-c" : ""}`}
+          >
             <Webcam
               audio={false}
               ref={webcamRef}
