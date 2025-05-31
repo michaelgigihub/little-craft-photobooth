@@ -1,4 +1,4 @@
-import { createLazyFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createLazyFileRoute, useNavigate } from "@tanstack/react-router";
 import { usePhotoContext } from "../context/PhotoContext";
 import "../assets/css/index.lazy.css";
 import layoutAImage from "../assets/images/layout-a.png";
@@ -39,7 +39,7 @@ function Index() {
       id: "d",
       image: layoutDImage,
       alt: "Photo Strip Example D",
-      photoCount: 6,
+      photoCount: 2,
     },
   ];
 
@@ -74,7 +74,15 @@ function Index() {
                   src={layout.image}
                   alt={layout.alt}
                 />
-                <div className="layout-info">{layout.photoCount} Photos</div>
+                <div className="layout-info">
+                  {layout.photoCount} Photos
+                  {layout.id === "c" && (
+                    <div className="layout-ratio">{"(2:6 ratio)"}</div>
+                  )}
+                  {layout.id === "d" && (
+                    <div className="layout-ratio">{"(4:6 ratio)"}</div>
+                  )}
+                </div>
               </button>
             </div>
           ))}

@@ -3,7 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import gifshot from "gifshot";
 import { usePhotoContext } from "../context/PhotoContext";
 import "../assets/css/photo-strip-preview.lazy.css";
+import "../assets/css/footer.css";
 import liloStitchFrameB from "../assets/images/frames/lilo_stitch_frames/lilo_stitch_frame_b.png";
+import Footer from "../components/Footer";
 import { downloadAsJPEG } from "../assets/javascript/downloadJpeg.js";
 import { downloadAsGIF } from "../assets/javascript/downloadGif.js";
 import { generatePhotoStrip } from "../assets/javascript/generatePhotoStrip.js";
@@ -53,7 +55,10 @@ function PhotoStripPreviewComponent() {
       case "a":
         return 1200; // Layout A: 1200px width
       case "b":
-        return 600; // Layout B: 600px width
+      case "c":
+        return 600; // Layout B or D: 600px width
+      case "d":
+        return 1200; // Layout C: 1200 width
       default:
         return 0; // Default: 0px (to be determined for layouts C and D)
     }
@@ -76,9 +81,12 @@ function PhotoStripPreviewComponent() {
   const getPhotoGap = () => {
     switch (layout) {
       case "a":
-        return 30; // Layout A: 1200px width
+        return 30;
       case "b":
-        return 60; // Layout B: 600px width
+      case "c":
+        return 60;
+      case "d":
+        return 40;
       default:
         return 0; // Default: 0px (to be determined for layouts C and D)
     }
@@ -94,6 +102,9 @@ function PhotoStripPreviewComponent() {
     case "b":
       canvasPadding = { top: 80, left: 30 };
       break;
+    case "d":
+      canvasPadding = { top: 70, left: 97 };
+      break;
     default:
       canvasPadding = { top: 0, left: 0 };
   }
@@ -102,17 +113,11 @@ function PhotoStripPreviewComponent() {
   const getStripHeight = () => {
     switch (layout) {
       case "a": // 4 photos, 1 per row - standard 2:6 aspect ratio
-        return 3600; //fixed 3600(3100 + 470 bottom pad) height for 4 photos
+        return 3600;
       case "b": // 3 photos, 1 per row - standard 2:6 aspect ratio
-        return 1800; //fixed 1800px(1300px + 470 bottom pad) height for 3 photos
-      case "c": // 2 photos, 1 per row - shorter strip
-        const photoHeight = ((stripWidth - photoSidePad * 2) * 3) / 4; // 4:3 aspect ratio
-        return (photoHeight + photoSidePad) * 2 + photoSidePad;
-      case "d": // 6 photos, 2 per row (3 rows) - compact layout
-        // For layout d, calculate based on 2-column layout
-        const layoutDPhotoWidth = (stripWidth - photoSidePad * 3) / 2; // Width for 2 columns
-        const layoutDPhotoHeight = (layoutDPhotoWidth * 3) / 4; // 4:3 aspect ratio
-        return (layoutDPhotoHeight + photoSidePad) * 3 + photoSidePad;
+      case "c": // 2 photos, 1 per row - standard 4:6 aspect ratio
+      case "d": // 2 photos, 1 per row - standard 2:6 aspect ratio
+        return 1800;
       default:
         return stripWidth * 3; // Default to 2:6 ratio
     }
@@ -157,13 +162,13 @@ function PhotoStripPreviewComponent() {
       photoGap,
       setStripGenerated,
     });
-  };
-  // Early return check - must be AFTER all hooks have been called
+  }; // Early return check - must be AFTER all hooks have been called
   if (!hasActiveSession() || !photos || photos.length === 0) {
     return (
-      <div className="photo-strip-container">
+      <div className="photo-strip-container page-container">
         <h2>Redirecting...</h2>
         <p>Loading photo session...</p>
+        <Footer />
       </div>
     );
   }
@@ -178,7 +183,7 @@ function PhotoStripPreviewComponent() {
   };
 
   return (
-    <div className="photo-strip-container">
+    <div className="photo-strip-container page-container">
       <h2>Your Photo Strip</h2>{" "}
       <div className="strip-info">
         Layout: {layout.toUpperCase()} - {photoCount} photos
@@ -253,7 +258,7 @@ function PhotoStripPreviewComponent() {
       </div>
       {stripGenerated && (
         <div className="download-controls">
-          <h3>Download Your Photo Strip</h3>{" "}
+          <p>Download Your Photo Strip</p>{" "}
           <div className="download-buttons">
             <button
               onClick={handleDownloadJPEG}
@@ -270,12 +275,13 @@ function PhotoStripPreviewComponent() {
             </button>
           </div>
         </div>
-      )}
+      )}{" "}
       <div className="navigation-controls">
         <button onClick={takeNewPhotos} className="action-btn primary">
           Take New Photos
         </button>
       </div>
+      <Footer />
     </div>
   );
 }

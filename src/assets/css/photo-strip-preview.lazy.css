@@ -12,7 +12,10 @@
   margin-bottom: 1rem;
   font-size: 1.1rem;
   font-weight: bold;
-  color: #333;
+}
+p {
+  font-size: 1.1rem;
+  font-weight: bold;
 }
 
 /* Strip preview container for side-by-side layout */
@@ -68,10 +71,9 @@
   .photo-strip-canvas {
     max-width: 30%;
   }
-
   /* Special width for layout D (2 photos per row) */
   .photo-strip-canvas.layout-d {
-    max-width: 65%;
+    max-width: 48%;
   }
 }
 
