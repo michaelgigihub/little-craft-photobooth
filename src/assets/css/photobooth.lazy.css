@@ -289,11 +289,17 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(52, 58, 64, 0.9);
   color: white;
-  padding: 1rem;
-  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
   text-align: center;
+  font-size: 0.9rem;
+  font-weight: 500;
+  min-width: 120px;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 /* Camera switch button */
@@ -335,6 +341,230 @@
 .camera-switch-btn:focus {
   outline: 2px solid #2196f3;
   outline-offset: 2px;
+}
+
+/* Mode Switcher */
+.mode-switcher {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  padding: 3px;
+  border: 1px solid #e9ecef;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #6c757d;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-width: 80px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.mode-btn:hover {
+  background: #e9ecef;
+  color: #495057;
+}
+
+.mode-btn.active {
+  background: #0d6efd;
+  color: white;
+  box-shadow: 0 1px 3px rgba(13, 110, 253, 0.25);
+}
+
+.mode-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Upload Container */
+.upload-container {
+  width: 100%;
+  max-width: 640px;
+  position: relative;
+  aspect-ratio: 4/3;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  flex: 3;
+  background: #f8f9fa;
+  border: 2px dashed #ddd;
+  overflow: hidden;
+}
+
+.upload-container.layout-c {
+  aspect-ratio: 540/713;
+  max-width: 540px;
+}
+
+/* Upload Area */
+.upload-area {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-label {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.upload-label:hover {
+  background: #f0f0f0;
+}
+
+.upload-content {
+  text-align: center;
+  color: #666;
+}
+
+.upload-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.7;
+}
+
+.upload-text h3 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.upload-text p {
+  margin: 0 0 0.5rem 0;
+  color: #666;
+}
+
+.upload-text small {
+  color: #999;
+  font-size: 0.8rem;
+}
+
+/* Crop Preview Container */
+.crop-preview-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #000;
+  position: relative;
+}
+
+.crop-preview-area {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.crop-preview-image {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.crop-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.crop-frame {
+  /* Base styling - position and dimensions are set dynamically via JavaScript */
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+/* Remove the old static crop frame dimensions since they're now calculated dynamically */
+
+/* Crop Controls */
+.crop-controls {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.85);
+  justify-content: center;
+  border-radius: 0 0 8px 8px;
+}
+
+.crop-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-width: 80px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.crop-btn.cancel {
+  background: #6c757d;
+  color: white;
+}
+
+.crop-btn.cancel:hover {
+  background: #5a6268;
+  transform: translateY(-1px);
+}
+
+.crop-btn.confirm {
+  background: #28a745;
+  color: white;
+}
+
+.crop-btn.confirm:hover {
+  background: #218838;
+  transform: translateY(-1px);
+}
+
+/* Upload Instructions */
+.upload-instructions {
+  text-align: center;
+  color: #666;
+  padding: 1rem;
+}
+
+.upload-instructions p {
+  margin: 0.5rem 0;
+}
+
+.upload-instructions p:first-child {
+  font-weight: 500;
+  color: #333;
 }
 
 /* Responsive adjustments */

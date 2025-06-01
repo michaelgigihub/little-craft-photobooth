@@ -52,12 +52,11 @@ function PhotoStripPreviewComponent() {
   const getStripWidth = () => {
     switch (layout) {
       case "a":
-        return 1200; // Layout A: 1200px width
       case "b":
+      case "d":
+        return 1200; // Layout A or C: 1200px width
       case "c":
         return 600; // Layout B or D: 600px width
-      case "d":
-        return 1200; // Layout C: 1200 width
       default:
         return 0; // Default: 0px (to be determined for layouts C and D)
     }
@@ -70,7 +69,7 @@ function PhotoStripPreviewComponent() {
       case "a":
         return 30;
       case "b":
-        return 60;
+        return 120;
       case "c":
       case "d":
         return 40;
@@ -87,7 +86,7 @@ function PhotoStripPreviewComponent() {
       canvasPadding = { top: 120, left: 67 };
       break;
     case "b":
-      canvasPadding = { top: 80, left: 30 };
+      canvasPadding = { top: 160, left: 60 };
       break;
     case "c":
       canvasPadding = { top: 60, left: 30 };
@@ -103,8 +102,8 @@ function PhotoStripPreviewComponent() {
   const getStripHeight = () => {
     switch (layout) {
       case "a": // 4 photos, 1 per row - standard 2:6 aspect ratio
-        return 3600;
       case "b": // 3 photos, 1 per row - standard 2:6 aspect ratio
+        return 3600;
       case "c": // 2 photos, 1 per row - standard 4:6 aspect ratio
       case "d": // 2 photos, 1 per row - standard 2:6 aspect ratio
         return 1800;

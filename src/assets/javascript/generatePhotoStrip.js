@@ -147,9 +147,9 @@ export const generatePhotoStrip = async ({
     switch (layout) {
       case "a": // 4 strips (2:6)
       case "d": // 2 strips (4:6)
+      case "b": // 3 strips (2:6)
         ctx.font = `50px ${bodyFont}`;
         break;
-      case "b": // 3 strips (2:6)
       case "c": // 2 strips (2:6)
         ctx.font = `25px ${bodyFont}`;
         break;

@@ -38,7 +38,13 @@ function PhotoboothComponent() {
   const [webcamReady, setWebcamReady] = useState(false);
   const [facingMode, setFacingMode] = useState("user"); // "user" for front, "environment" for rear
   const [hasRearCamera, setHasRearCamera] = useState(false);
+  const [mode, setMode] = useState("camera"); // "camera" or "upload"
+  const [showCropPreview, setShowCropPreview] = useState(false);
+  const [tempUploadedFile, setTempUploadedFile] = useState(null);
+  const [cropFrameStyle, setCropFrameStyle] = useState({});
   const webcamRef = useRef(null);
+  const cropCanvasRef = useRef(null);
+  const previewImageRef = useRef(null);
 
   // Debug log
   console.log("Current state:", {
@@ -382,66 +388,356 @@ function PhotoboothComponent() {
       // Navigate to photo-strip-preview
       navigate({ to: "/photo-strip-preview" });
     }
-  }, [photoSession.photos, photoCount, navigate]);
-  // Reset the captures
+  }, [photoSession.photos, photoCount, navigate]); // Reset the captures
   const resetCaptures = () => {
     clearPhotos();
     setCapturing(false);
     setCountdown(null);
+    setShowCropPreview(false);
+    setTempUploadedFile(null);
   };
+
+  // Function to handle file upload
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Check if it's an image
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file.");
+      // Reset the file input
+      event.target.value = "";
+      return;
+    }
+
+    // Check file size (optional: limit to 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert("Please select an image smaller than 10MB.");
+      // Reset the file input
+      event.target.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setTempUploadedFile(e.target.result);
+      setShowCropPreview(true);
+    };
+    reader.readAsDataURL(file);
+
+    // Reset the file input so the same file can be selected again if needed
+    event.target.value = "";
+  };
+
+  // Function to process and crop uploaded image
+  const processUploadedImage = useCallback(() => {
+    if (!tempUploadedFile || !cropCanvasRef.current) return;
+
+    const canvas = cropCanvasRef.current;
+    const ctx = canvas.getContext("2d");
+
+    const img = new Image();
+    img.onload = () => {
+      // Set canvas dimensions based on layout
+      let targetWidth, targetHeight, targetAspect;
+
+      if (layout === "c") {
+        targetWidth = 1620; // 3x scale of 540 for high quality
+        targetHeight = 2139; // 3x scale of 713 for high quality
+        targetAspect = 540 / 713;
+      } else {
+        targetWidth = 1920;
+        targetHeight = 1440;
+        targetAspect = 4 / 3;
+      }
+
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+
+      // Enable high-quality rendering
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+
+      // Calculate crop area to maintain target aspect ratio
+      const imgAspect = img.width / img.height;
+
+      let sourceX = 0,
+        sourceY = 0,
+        sourceWidth = img.width,
+        sourceHeight = img.height;
+
+      if (imgAspect > targetAspect) {
+        // Image is wider than target, crop the sides
+        sourceWidth = img.height * targetAspect;
+        sourceX = (img.width - sourceWidth) / 2;
+      } else {
+        // Image is taller than target, crop top and bottom
+        sourceHeight = img.width / targetAspect;
+        sourceY = (img.height - sourceHeight) / 2;
+      }
+
+      // Draw the cropped image
+      ctx.drawImage(
+        img,
+        sourceX,
+        sourceY,
+        sourceWidth,
+        sourceHeight,
+        0,
+        0,
+        targetWidth,
+        targetHeight
+      ); // Convert to base64 and add to photos
+      const croppedImageSrc = canvas.toDataURL("image/jpeg", 1.0);
+      addPhoto(croppedImageSrc);
+
+      // Reset upload state
+      setShowCropPreview(false);
+      setTempUploadedFile(null);
+    };
+    img.src = tempUploadedFile;
+  }, [tempUploadedFile, layout, addPhoto]);
+
+  // Function to cancel crop preview
+  const cancelCropPreview = () => {
+    setShowCropPreview(false);
+    setTempUploadedFile(null);
+    setCropFrameStyle({});
+  }; // Function to calculate crop frame dimensions based on the actual image display
+  const calculateCropFrame = useCallback(() => {
+    if (!previewImageRef.current) return;
+
+    const img = previewImageRef.current;
+    const container = img.parentElement; // The crop-preview-image div
+
+    // Get the target aspect ratio based on layout
+    const targetAspect = layout === "c" ? 540 / 713 : 4 / 3;
+
+    // Get container dimensions
+    const containerWidth = container.offsetWidth;
+    const containerHeight = container.offsetHeight;
+
+    // Calculate how the image is displayed with object-fit: contain
+    const imgNaturalAspect = img.naturalWidth / img.naturalHeight;
+    const containerAspect = containerWidth / containerHeight;
+
+    let displayedWidth, displayedHeight;
+    let imageOffsetX = 0,
+      imageOffsetY = 0;
+
+    if (imgNaturalAspect > containerAspect) {
+      // Image is constrained by container width
+      displayedWidth = containerWidth;
+      displayedHeight = containerWidth / imgNaturalAspect;
+      imageOffsetX = 0;
+      imageOffsetY = (containerHeight - displayedHeight) / 2;
+    } else {
+      // Image is constrained by container height
+      displayedHeight = containerHeight;
+      displayedWidth = containerHeight * imgNaturalAspect;
+      imageOffsetX = (containerWidth - displayedWidth) / 2;
+      imageOffsetY = 0;
+    }
+
+    // Calculate crop frame dimensions to match target aspect ratio
+    let cropWidth, cropHeight;
+
+    if (imgNaturalAspect > targetAspect) {
+      // Image is wider than target ratio - crop from sides
+      cropHeight = displayedHeight;
+      cropWidth = cropHeight * targetAspect;
+    } else {
+      // Image is taller than target ratio - crop from top/bottom
+      cropWidth = displayedWidth;
+      cropHeight = cropWidth / targetAspect;
+    } // Center the crop frame within the displayed image area
+    const cropLeft = imageOffsetX + (displayedWidth - cropWidth) / 2;
+    const cropTop = imageOffsetY + (displayedHeight - cropHeight) / 2;
+
+    // Position relative to the container
+    const frameStyle = {
+      position: "absolute",
+      left: `${cropLeft}px`,
+      top: `${cropTop}px`,
+      width: `${cropWidth}px`,
+      height: `${cropHeight}px`,
+      border: "2px solid #fff",
+      boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.5)",
+      pointerEvents: "none",
+      transform: "none", // Override CSS transform
+    };
+
+    setCropFrameStyle(frameStyle);
+  }, [layout]);
+
+  // Handle image load to calculate crop frame
+  const handleImageLoad = () => {
+    // Small delay to ensure the image is properly rendered
+    setTimeout(calculateCropFrame, 50);
+  };
+
+  // Recalculate crop frame on window resize
+  useEffect(() => {
+    if (showCropPreview) {
+      const handleResize = () => {
+        setTimeout(calculateCropFrame, 50);
+      };
+
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }
+  }, [showCropPreview, calculateCropFrame]);
 
   return (
     <div className="photobooth-container">
       <h2>Photobooth</h2>
       <div className="photo-count-info">
         Layout: {layout.toUpperCase()} - {photoCount} photos
-      </div>{" "}
+      </div>
+
+      {/* Mode Switcher */}
+      {photoSession.photos.length < photoCount && (
+        <div className="mode-switcher">
+          <button
+            className={`mode-btn ${mode === "camera" ? "active" : ""}`}
+            onClick={() => setMode("camera")}
+            disabled={capturing}
+          >
+            📷 Camera
+          </button>
+          <button
+            className={`mode-btn ${mode === "upload" ? "active" : ""}`}
+            onClick={() => setMode("upload")}
+            disabled={capturing}
+          >
+            📁 Upload
+          </button>
+        </div>
+      )}
+
       {photoSession.photos.length < photoCount && (
         <div className="webcam-preview-container">
-          {!webcamReady && !webcamError && (
-            <div className="webcam-loading">
-              <p style={{ textAlign: "center", margin: "10px 0" }}>
-                Loading camera...
-              </p>
-            </div>
-          )}{" "}
-          <div
-            className={`webcam-container ${layout === "c" ? "layout-c" : ""}`}
-          >
-            <Webcam
-              audio={false}
-              ref={webcamRef}
-              key={facingMode} // Force re-render when camera switches
-              screenshotFormat="image/jpeg"
-              screenshotQuality={1.0} // Maximum quality
-              videoConstraints={videoConstraints}
-              className="webcam-video"
-              style={{
-                transform: shouldFlipVideo() ? "scaleX(-1)" : "scaleX(1)",
-                opacity: webcamReady ? 1 : 0.5,
-              }}
-              onUserMedia={handleWebcamReady}
-              onUserMediaError={handleWebcamError}
-            />{" "}
-            {countdown !== null && countdown >= 0 && (
-              <div className="counter">{countdown}</div>
-            )}
-            {/* Camera switch button */}
-            <button
-              className={`camera-switch-btn ${!hasRearCamera || countdown === 0 || capturing ? "disabled" : ""}`}
-              onClick={switchCamera}
-              disabled={!hasRearCamera || countdown === 0 || capturing}
-              title={
-                capturing
-                  ? "Cannot switch camera during capture session"
-                  : hasRearCamera
-                    ? "Switch Camera"
-                    : "No rear camera available"
-              }
+          {/* Camera Mode */}
+          {mode === "camera" && (
+            <>
+              {!webcamReady && !webcamError && (
+                <div className="webcam-loading">
+                  <p style={{ textAlign: "center", margin: "10px 0" }}>
+                    Loading camera...
+                  </p>
+                </div>
+              )}
+
+              <div
+                className={`webcam-container ${layout === "c" ? "layout-c" : ""}`}
+              >
+                <Webcam
+                  audio={false}
+                  ref={webcamRef}
+                  key={facingMode}
+                  screenshotFormat="image/jpeg"
+                  screenshotQuality={1.0}
+                  videoConstraints={videoConstraints}
+                  className="webcam-video"
+                  style={{
+                    transform: shouldFlipVideo() ? "scaleX(-1)" : "scaleX(1)",
+                    opacity: webcamReady ? 1 : 0.5,
+                  }}
+                  onUserMedia={handleWebcamReady}
+                  onUserMediaError={handleWebcamError}
+                />
+
+                {countdown !== null && countdown >= 0 && (
+                  <div className="counter">{countdown}</div>
+                )}
+
+                {/* Camera switch button */}
+                <button
+                  className={`camera-switch-btn ${!hasRearCamera || countdown === 0 || capturing ? "disabled" : ""}`}
+                  onClick={switchCamera}
+                  disabled={!hasRearCamera || countdown === 0 || capturing}
+                  title={
+                    capturing
+                      ? "Cannot switch camera during capture session"
+                      : hasRearCamera
+                        ? "Switch Camera"
+                        : "No rear camera available"
+                  }
+                >
+                  <SwitchCamera size={24} />
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* Upload Mode */}
+          {mode === "upload" && (
+            <div
+              className={`upload-container ${layout === "c" ? "layout-c" : ""}`}
             >
-              <SwitchCamera size={24} />
-            </button>
-          </div>
+              {!showCropPreview ? (
+                <div className="upload-area">
+                  <input
+                    type="file"
+                    id="file-upload"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    style={{ display: "none" }}
+                  />
+                  <label htmlFor="file-upload" className="upload-label">
+                    <div className="upload-content">
+                      <div className="upload-icon">📁</div>
+                      <div className="upload-text">
+                        <h3>Upload Photo {photoSession.photos.length + 1}</h3>
+                        <p>Click to select an image</p>
+                        <small>
+                          {layout === "c"
+                            ? "Image will be cropped to 540:713 ratio"
+                            : "Image will be cropped to 4:3 ratio"}
+                        </small>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              ) : (
+                <div className="crop-preview-container">
+                  <div className="crop-preview-area">
+                    <canvas ref={cropCanvasRef} style={{ display: "none" }} />
+                    <div className="crop-preview-image">
+                      <img
+                        src={tempUploadedFile}
+                        alt="Upload preview"
+                        className="preview-img"
+                        ref={previewImageRef}
+                        onLoad={handleImageLoad}
+                      />
+                      <div className="crop-overlay">
+                        <div
+                          className="crop-frame"
+                          style={cropFrameStyle}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="crop-controls">
+                    <button
+                      className="crop-btn cancel"
+                      onClick={cancelCropPreview}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="crop-btn confirm"
+                      onClick={processUploadedImage}
+                    >
+                      Use This Photo
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Preview of the latest captured photo */}
           {photoSession.photos.length > 0 && (
             <div className="preview-container">
@@ -457,57 +753,78 @@ function PhotoboothComponent() {
           )}
         </div>
       )}
-      {photoSession.photos.length < photoCount && !capturing && (
-        <div className="countdown-selector">
-          <p>Select Countdown Time</p>
-          <div className="countdown-options">
-            <button
-              className="countdown-option"
-              onClick={() => setCountdownTime(3)}
-              data-selected={countdownTime === 3}
-            >
-              3 sec
-            </button>
-            <button
-              className="countdown-option"
-              onClick={() => setCountdownTime(5)}
-              data-selected={countdownTime === 5}
-            >
-              5 sec
-            </button>
-            <button
-              className="countdown-option"
-              onClick={() => setCountdownTime(10)}
-              data-selected={countdownTime === 10}
-            >
-              10 sec
-            </button>
+
+      {/* Countdown Selector - Only show for camera mode */}
+      {photoSession.photos.length < photoCount &&
+        !capturing &&
+        mode === "camera" && (
+          <div className="countdown-selector">
+            <p>Select Countdown Time</p>
+            <div className="countdown-options">
+              <button
+                className="countdown-option"
+                onClick={() => setCountdownTime(3)}
+                data-selected={countdownTime === 3}
+              >
+                3 sec
+              </button>
+              <button
+                className="countdown-option"
+                onClick={() => setCountdownTime(5)}
+                data-selected={countdownTime === 5}
+              >
+                5 sec
+              </button>
+              <button
+                className="countdown-option"
+                onClick={() => setCountdownTime(10)}
+                data-selected={countdownTime === 10}
+              >
+                10 sec
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+
       <div className="controls">
-        {" "}
         {photoSession.photos.length < photoCount ? (
-          <button
-            className="capture-btn"
-            onClick={startCapturing}
-            disabled={capturing || !webcamReady || !!webcamError}
-          >
-            {photoSession.photos.length === 0
-              ? !webcamReady
-                ? "Preparing camera..."
-                : webcamError
-                  ? "Camera unavailable"
-                  : "Start Taking Photos"
-              : capturing
-                ? `Capturing in progress...`
-                : `Continue Photo Session (${photoSession.photos.length}/${photoCount} taken)`}
-          </button>
+          <>
+            {mode === "camera" && (
+              <button
+                className="capture-btn"
+                onClick={startCapturing}
+                disabled={capturing || !webcamReady || !!webcamError}
+              >
+                {photoSession.photos.length === 0
+                  ? !webcamReady
+                    ? "Preparing camera..."
+                    : webcamError
+                      ? "Camera unavailable"
+                      : "Start Taking Photos"
+                  : capturing
+                    ? `Capturing in progress...`
+                    : `Continue Photo Session (${photoSession.photos.length}/${photoCount} taken)`}
+              </button>
+            )}
+            {mode === "upload" && !showCropPreview && (
+              <div className="upload-instructions">
+                <p>
+                  Select {photoCount - photoSession.photos.length} more photo
+                  {photoCount - photoSession.photos.length > 1 ? "s" : ""}
+                </p>
+                <p>
+                  Progress: {photoSession.photos.length}/{photoCount} photos
+                  selected
+                </p>
+              </div>
+            )}
+          </>
         ) : (
           <button className="finish-btn" onClick={resetCaptures}>
             Reset & Take New Photos
           </button>
         )}
+
         {capturing && (
           <p className="capturing-status">
             Taking photo {photoSession.photos.length + 1} of {photoCount}
