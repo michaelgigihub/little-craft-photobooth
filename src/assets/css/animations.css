@@ -1,0 +1,83 @@
+/* Animation styles */
+
+/* Base styles for fade-in animations */
+.fade-in-section {
+  opacity: 0;
+  transform: translateY(30px); /* Reduced distance for quicker animation */
+  transition:
+    opacity 0.7s cubic-bezier(0.5, 0, 0, 1),
+    transform 0.7s cubic-bezier(0.5, 0, 0, 1); /* Faster duration */
+  will-change: opacity, transform;
+  position: relative;
+}
+
+/* Class added when element is in viewport */
+.fade-in-section.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Sequential delay for multiple elements - removed delays for instant triggering */
+.about-content .fade-in-section:nth-child(1) {
+  transition-delay: 0s;
+}
+
+.about-content .fade-in-section:nth-child(2) {
+  transition-delay: 0s;
+}
+
+.about-content .fade-in-section:nth-child(3) {
+  transition-delay: 0s;
+}
+
+.about-content .fade-in-section:nth-child(4) {
+  transition-delay: 0s;
+}
+
+/* Subtle animation for children elements - immediate transitions */
+.fade-in-section .section-title,
+.fade-in-section .section-content {
+  transition:
+    transform 0.6s cubic-bezier(0.5, 0, 0, 1),
+    opacity 0.6s ease;
+  transition-delay: 0s; /* No delay for immediate effect */
+}
+
+.fade-in-section:not(.is-visible) .section-title {
+  opacity: 0;
+  transform: translateY(15px); /* Reduced distance */
+}
+
+.fade-in-section:not(.is-visible) .section-content {
+  opacity: 0;
+  transform: translateY(12px); /* Reduced distance */
+}
+
+/* Special animation for CTA section */
+.cta-section.fade-in-section:not(.is-visible) {
+  transform: translateY(30px) scale(0.98);
+}
+
+.cta-section.fade-in-section.is-visible {
+  transform: translateY(0) scale(1);
+}
+
+/* Mobile optimization */
+@media (max-width: 768px) {
+  .fade-in-section {
+    transition-duration: 0.7s; /* Slightly faster on mobile */
+  }
+}
+
+/* Footer wrapper - ensure it doesn't interfere with footer styling */
+.footer-wrapper {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.footer-wrapper .footer {
+  /* Ensure footer maintains its original styling */
+  width: 100%;
+  margin: 0;
+}

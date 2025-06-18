@@ -1,4 +1,5 @@
 import { createLazyFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
 import Footer from "../components/Footer";
 import {
   Building2,
@@ -11,10 +12,11 @@ import {
   Layout,
   Printer,
   MoreHorizontal,
-  Camera,
 } from "lucide-react";
 import "../assets/css/about.css";
 import "../assets/css/gallery.css";
+import "../assets/css/animations.css";
+import "../assets/css/vertical-nav.css";
 
 // Import gallery images
 import galleryImg1 from "../assets/images/about-us-photos/490709330_1113258014148156_5262548791151562247_n.jpg";
@@ -29,8 +31,128 @@ export const Route = createLazyFileRoute("/about")({
 });
 
 function About() {
+  // Create refs for sections we want to observe
+  const sectionRefs = useRef([]);
+  const [activeSection, setActiveSection] = useState("about");
+
+  // Navigation items configuration
+  const navigationItems = [
+    { id: "about", label: "About Us" },
+    { id: "services", label: "Services Offered" },
+    { id: "gallery", label: "Our Works" },
+    { id: "story", label: "Our Story" },
+    { id: "footer", label: "Contact" },
+  ];
+
+  useEffect(() => {
+    // Set up intersection observer for animations
+    const animationOptions = {
+      root: null, // viewport
+      rootMargin: "100px 0px 100px 0px", // trigger when element is 100px away from entering viewport (very early)
+      threshold: 0.1, // trigger as soon as any part of the element is visible
+    };
+
+    const animationObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          // Add the visible class when element comes into view
+          entry.target.classList.add("is-visible");
+          // Once the animation has played, unobserve the element
+          animationObserver.unobserve(entry.target);
+        }
+      });
+    }, animationOptions);
+
+    // Set up intersection observer for navigation tracking (separate observer)
+    const navOptions = {
+      root: null,
+      rootMargin: "0px 0px -50% 0px", // Trigger when section is at least 50% in viewport
+      threshold: 0.1, // Lower threshold for better detection
+    };
+
+    const navObserver = new IntersectionObserver((entries) => {
+      // Create a map of all currently intersecting sections
+      const intersectingSections = new Map();
+
+      entries.forEach((entry) => {
+        const sectionId = entry.target.getAttribute("data-section");
+        if (entry.isIntersecting && sectionId) {
+          intersectingSections.set(sectionId, {
+            ratio: entry.intersectionRatio,
+            element: entry.target,
+          });
+        }
+      });
+
+      // If we have intersecting sections, find the most visible one
+      if (intersectingSections.size > 0) {
+        let mostVisibleSection = null;
+        let highestRatio = 0;
+
+        intersectingSections.forEach((data, sectionId) => {
+          if (data.ratio > highestRatio) {
+            highestRatio = data.ratio;
+            mostVisibleSection = sectionId;
+          }
+        });
+
+        if (mostVisibleSection) {
+          setActiveSection(mostVisibleSection);
+        }
+      }
+    }, navOptions);
+
+    // Get all sections with the fade-in-section class and observe them
+    const sections = document.querySelectorAll(".fade-in-section");
+    sections.forEach((section) => {
+      animationObserver.observe(section);
+      navObserver.observe(section); // Observe with both observers
+      sectionRefs.current.push(section);
+    });
+
+    // Clean up
+    return () => {
+      if (sectionRefs.current.length > 0) {
+        sectionRefs.current.forEach((section) => {
+          if (section) {
+            animationObserver.unobserve(section);
+            navObserver.unobserve(section);
+          }
+        });
+      }
+    };
+  }, []); // Run once on mount
+
+  // Function to scroll to a specific section
+  const scrollToSection = (sectionId) => {
+    // Immediately update the active section for instant feedback
+    setActiveSection(sectionId);
+
+    const element = document.querySelector(`[data-section="${sectionId}"]`);
+    if (element) {
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+        inline: "nearest",
+      });
+    }
+  };
+
   return (
     <div className="page-container">
+      {/* Vertical Navigation */}
+      <nav className="vertical-nav">
+        {navigationItems.map((item) => (
+          <div
+            key={item.id}
+            className={`nav-dot ${activeSection === item.id ? "active" : ""}`}
+            onClick={() => scrollToSection(item.id)}
+          >
+            <div className="nav-label">{item.label}</div>
+          </div>
+        ))}
+      </nav>
+
       <div className="about-container">
         {/* Hero Section */}
         <div className="about-hero">
@@ -44,40 +166,38 @@ function About() {
         {/* Main Content */}
         <div className="about-content">
           {/* About Us Section */}
-          <div className="about-section">
+          <div className="about-section fade-in-section" data-section="about">
             <h2 className="section-title">
               <Building2 className="section-icon" size={32} />
               About Us
             </h2>
             <div className="section-content">
               <p>
-                At <strong>Little Crafts by WRT</strong>,{" "}
-                <em>creativity meets craftsmanship</em>. We are a dedicated arts
-                and crafts studio offering a{" "}
-                <strong>diverse range of services</strong> designed to bring
-                your ideas to life.
+                At Little Crafts by WRT, creativity meets craftsmanship. We are
+                a dedicated arts and crafts studio offering a diverse range of
+                services designed to bring your ideas to life.
               </p>
               <p>
-                We specialize in{" "}
-                <strong>
-                  printing, digital layouts, custom invitations, souvenirs, and
-                  many more
-                </strong>
-                . We focus on <em>quality and customer satisfaction</em>, making
-                sure each product reflects our clients' needs and ideas.
-              </p>
-              <p>
-                Whether you're planning a <strong>special event</strong>,
-                launching a <strong>business</strong>, or simply looking to
-                create something <em>meaningful</em>,{" "}
-                <strong>Little Crafts by WRT</strong> is here to help bring your
+                We specialize in printing, digital layouts, custom invitations,
+                souvenirs, and many more . We focus on quality and customer
+                satisfaction, making sure each product reflects our clients'
+                needs and ideas. Whether you're planning a special event,
+                launching a business, or simply looking to create something
+                meaningful, Little Crafts by WRT is here to help bring your
                 vision to life.
+              </p>
+
+              <p>
+                <em>Based in NCR, Philippines 🇵🇭 {"–"} we ship nationwide!</em>
               </p>
             </div>
           </div>
 
           {/* Services Offered Section */}
-          <div className="about-section">
+          <div
+            className="about-section fade-in-section"
+            data-section="services"
+          >
             <h2 className="section-title">
               <Palette className="section-icon" size={32} />
               Services Offered
@@ -144,18 +264,11 @@ function About() {
           </div>
 
           {/* Work Gallery Section */}
-          <div className="about-section gallery-section">
-            <h2 className="section-title">
-              <Camera className="section-icon" size={32} />
-              Our Portfolio
-            </h2>
+          <div
+            className="about-section gallery-section fade-in-section"
+            data-section="gallery"
+          >
             <div className="section-content">
-              <p>
-                Browse through our collection of creative works, showcasing our
-                attention to detail and artistic vision. Each piece tells a
-                unique story and represents our dedication to quality
-                craftsmanship.
-              </p>
               <p
                 className="gallery-caption"
                 style={{
@@ -244,7 +357,10 @@ function About() {
           </div>
 
           {/* History Section */}
-          <div className="about-section history-section">
+          <div
+            className="about-section history-section fade-in-section"
+            data-section="story"
+          >
             <h2 className="section-title">
               <Heart className="section-icon" size={32} />
               Our Story
@@ -282,7 +398,7 @@ function About() {
         </div>
 
         {/* Call to Action */}
-        <div className="cta-section">
+        <div className="cta-section fade-in-section">
           <h2 className="cta-title">Ready to Create Memories?</h2>
           <p className="cta-description">
             Experience our interactive photobooth and capture moments that will
@@ -294,7 +410,11 @@ function About() {
           </Link>
         </div>
       </div>
-      <Footer />
+
+      {/* Footer Section */}
+      <div className="fade-in-section footer-wrapper" data-section="footer">
+        <Footer />
+      </div>
     </div>
   );
 }

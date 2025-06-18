@@ -26,7 +26,7 @@ function Footer() {
       </div>
       <div className="footer-social">
         <a
-          href="https://facebook.com/littlecrafts"
+          href="https://www.facebook.com/WearItTw.Bales"
           target="_blank"
           rel="noopener noreferrer"
           className="social-link"
