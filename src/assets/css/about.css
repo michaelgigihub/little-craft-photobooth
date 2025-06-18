@@ -4,6 +4,8 @@
   margin: 0 auto;
   padding: 1.5rem var(--spacing);
   color: var(--color-text-on-primary-black);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .about-hero {
@@ -62,6 +64,8 @@
   padding: 2.5rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
   border: 1px solid rgba(46, 63, 89, 0.1);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .section-title {
@@ -247,12 +251,17 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .about-container {
-    padding: 1rem 0.75rem;
+    padding: 1rem var(--spacing);
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    box-sizing: border-box;
   }
 
   .about-hero {
     padding: 1.5rem 0;
     margin-bottom: 2rem;
+    width: 100%;
   }
 
   .about-title {
@@ -335,12 +344,21 @@
 /* Extra small devices (phones in portrait) */
 @media (max-width: 480px) {
   .about-container {
-    padding: 0.75rem 0.5rem;
+    padding: 0.75rem var(--spacing);
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .about-hero {
     padding: 1rem 0;
     margin-bottom: 1.5rem;
+  }
+
+  .about-section {
+    padding: 1.5rem;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .about-title {
