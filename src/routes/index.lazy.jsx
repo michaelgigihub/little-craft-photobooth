@@ -49,7 +49,7 @@ function Index() {
   };
 
   return (
-    <div className="page-container">
+    <div className="page-container index-page">
       <div className="p-2">
         <h2>Choose your layout!</h2>
         <p>

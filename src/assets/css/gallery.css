@@ -1,0 +1,165 @@
+/* Gallery Styles */
+.gallery-section {
+  margin-top: 1rem;
+  margin-bottom: 3rem;
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+/* Media query for medium screens */
+@media (min-width: 768px) {
+  .gallery-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Media query for large screens - ensuring at least 3 per row */
+@media (min-width: 992px) {
+  .gallery-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* For extra large screens */
+@media (min-width: 1400px) {
+  .gallery-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.gallery-item {
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+  aspect-ratio: 1/1;
+  cursor: pointer;
+}
+
+.gallery-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+}
+
+.gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.gallery-item:hover img {
+  transform: scale(1.05);
+}
+
+.gallery-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 1rem;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+  color: white;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.gallery-item:hover .gallery-overlay {
+  opacity: 1;
+}
+
+.gallery-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  font-family: var(--font-family-body);
+}
+
+.gallery-description {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+/* Featured item (can be applied to highlight special works) */
+.gallery-item.featured {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+
+/* Make featured item responsive on small screens */
+@media (max-width: 767px) {
+  .gallery-item.featured {
+    grid-column: span 1;
+    grid-row: span 1;
+  }
+
+  .gallery-grid {
+    gap: 1rem;
+  }
+
+  .gallery-item {
+    transform: none !important;
+  }
+}
+
+/* Magazine-style layout enhancements */
+.gallery-grid {
+  padding: 0.5rem;
+  margin-top: 2.5rem;
+}
+
+/* Add a slight tilt to some images for magazine feel */
+.gallery-item:nth-child(3n + 1) {
+  transform: rotate(-1deg);
+}
+
+.gallery-item:nth-child(3n + 2) {
+  transform: rotate(0deg);
+}
+
+.gallery-item:nth-child(3n + 3) {
+  transform: rotate(1deg);
+}
+
+.gallery-item:hover {
+  transform: rotate(0) translateY(-5px);
+  z-index: 10; /* Bring hovered item to front */
+}
+
+/* Magazine style captions */
+.gallery-overlay {
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.8),
+    rgba(0, 0, 0, 0.2),
+    transparent
+  );
+  padding-top: 3rem;
+  padding-bottom: 0.75rem;
+}
+
+/* Featured item enhancement */
+.gallery-item.featured {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+/* Add some drop shadow to create depth */
+.gallery-item::after {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  left: 5px;
+  right: 5px;
+  height: 5px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  z-index: -1;
+}

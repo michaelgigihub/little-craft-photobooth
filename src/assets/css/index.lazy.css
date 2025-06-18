@@ -60,11 +60,13 @@
   color: var(--color-primary);
   margin-top: 0.25rem;
 }
-h2,
-p {
+/* Index page specific styles - scoped to avoid global conflicts */
+.index-page h2,
+.index-page p {
   text-align: center;
 }
-p {
+
+.index-page p {
   margin-bottom: 2rem;
   font-size: 1.1rem;
   font-weight: bold;

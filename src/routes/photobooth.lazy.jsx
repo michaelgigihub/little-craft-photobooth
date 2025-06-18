@@ -42,6 +42,7 @@ function PhotoboothComponent() {
   const [showCropPreview, setShowCropPreview] = useState(false);
   const [tempUploadedFile, setTempUploadedFile] = useState(null);
   const [cropFrameStyle, setCropFrameStyle] = useState({});
+  const [isFlashing, setIsFlashing] = useState(false);
   const webcamRef = useRef(null);
   const cropCanvasRef = useRef(null);
   const previewImageRef = useRef(null);
@@ -210,10 +211,13 @@ function PhotoboothComponent() {
       "Switching camera to:",
       facingMode === "user" ? "environment" : "user"
     );
-  }, [hasRearCamera, countdown, facingMode, capturing]);
-  // Function to capture a photo with maximum quality and proper aspect ratio cropping
+  }, [hasRearCamera, countdown, facingMode, capturing]); // Function to capture a photo with maximum quality and proper aspect ratio cropping
   const capturePhoto = useCallback(() => {
     if (webcamRef.current) {
+      // Trigger flash effect
+      setIsFlashing(true);
+      setTimeout(() => setIsFlashing(false), 500); // Flash duration
+
       // Get the webcam video element to check its actual dimensions
       const video = webcamRef.current.video;
       if (!video) return;
@@ -331,8 +335,8 @@ function PhotoboothComponent() {
     isMobile,
     facingMode,
     layout,
+    setIsFlashing,
   ]);
-
   // Function to handle single countdown and photo capture
   const handleCountdown = useCallback(() => {
     return new Promise((resolve) => {
@@ -341,12 +345,15 @@ function PhotoboothComponent() {
       let count = countdownTime;
       const timer = setInterval(() => {
         count -= 1;
-        setCountdown(count);
 
         if (count <= 0) {
+          // Don't show 0, capture immediately
+          setCountdown(null);
           clearInterval(timer);
           capturePhoto();
-          setTimeout(resolve, 500); // Short delay after capture
+          setTimeout(resolve, 600); // Short delay after capture
+        } else {
+          setCountdown(count);
         }
       }, 1000);
     });
@@ -626,10 +633,9 @@ function PhotoboothComponent() {
                     Loading camera...
                   </p>
                 </div>
-              )}
-
+              )}{" "}
               <div
-                className={`webcam-container ${layout === "c" ? "layout-c" : ""}`}
+                className={`webcam-container ${layout === "c" ? "layout-c" : ""} ${isFlashing ? "flash" : ""}`}
               >
                 <Webcam
                   audio={false}

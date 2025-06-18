@@ -75,9 +75,6 @@ export const Route = createRootRoute({
             >
               Privacy Policy
             </Link>
-            <Link to="/faq" className="nav-link" onClick={handleLinkClick}>
-              FAQ
-            </Link>
           </nav>
         </div>
         <div className="content-container">
