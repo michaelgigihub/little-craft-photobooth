@@ -137,11 +137,11 @@
 }
 
 .service-title {
-  font-family: var(--font-family-primary);
-  font-size: 1.3rem;
+  font-size: 1.1rem;
   font-weight: 600;
-  margin-bottom: 0.75rem;
+  font-family: var(--font-family-body);
   color: var(--color-primary);
+  margin-bottom: 0.75rem;
 }
 
 .service-description {
