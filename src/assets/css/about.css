@@ -10,7 +10,6 @@
 
 .about-hero {
   text-align: center;
-  margin-bottom: 3rem;
   padding: 2rem 0;
 }
 
@@ -352,7 +351,7 @@
 
   .about-hero {
     padding: 1rem 0;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.5rem;
   }
 
   .about-section {

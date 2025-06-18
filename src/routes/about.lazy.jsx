@@ -158,8 +158,7 @@ function About() {
         <div className="about-hero">
           <h1 className="about-title">Little Crafts by WRT</h1>
           <p className="about-subtitle">
-            Where creativity meets craftsmanship - bringing your ideas to life
-            with passion and precision
+            Made by hand, lend by grace. 
           </p>
         </div>
 
@@ -173,22 +172,18 @@ function About() {
             </h2>
             <div className="section-content">
               <p>
-                At Little Crafts by WRT, creativity meets craftsmanship. We are
-                a dedicated arts and crafts studio offering a diverse range of
-                services designed to bring your ideas to life.
+                At Little Crafts by WRT, creativity meets craftsmanship.
               </p>
               <p>
-                We specialize in printing, digital layouts, custom invitations,
-                souvenirs, and many more . We focus on quality and customer
-                satisfaction, making sure each product reflects our clients'
-                needs and ideas. Whether you're planning a special event,
-                launching a business, or simply looking to create something
-                meaningful, Little Crafts by WRT is here to help bring your
-                vision to life.
+                We focus on quality and customer satisfaction, making sure each
+                product reflects our clients' needs and ideas. Whether you're
+                planning a special event, launching a business, or simply
+                looking to create something meaningful, Little Crafts by WRT is
+                here to help bring your vision to life.
               </p>
 
               <p>
-                <em>Based in NCR, Philippines 🇵🇭 {"–"} we ship nationwide!</em>
+                <em>Based in Philippines 🇵🇭 {"–"} we ship nationwide!</em>
               </p>
             </div>
           </div>
@@ -204,8 +199,8 @@ function About() {
             </h2>
             <div className="section-content">
               <p>
-                We offer a comprehensive range of creative services to meet all
-                your design and printing needs:
+                We are a dedicated arts and crafts studio offering a diverse
+                range of services designed to bring your ideas to life.
               </p>
 
               <div className="services-grid">
@@ -402,8 +397,7 @@ function About() {
           <h2 className="cta-title">Ready to Create Memories?</h2>
           <p className="cta-description">
             Experience our interactive photobooth and capture moments that will
-            bring smiles for years to come. Perfect for events, celebrations,
-            and creating lasting memories.
+            bring smiles for years to come. Perfect for creating lasting memories.
           </p>
           <Link to="/" className="cta-button">
             Start Photobooth <ArrowRight size={20} />
