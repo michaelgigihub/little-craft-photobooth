@@ -5,6 +5,8 @@ import "../assets/css/photo-strip-preview.lazy.css";
 import "../assets/css/footer.css";
 import liloStitchFrameB from "../assets/images/frames/lilo_stitch_frames/lilo_stitch_frame_b.png";
 import Footer from "../components/Footer";
+import PromoModal from "../components/PromoModal";
+import QuoteModal from "../components/QuoteModal";
 import { downloadAsJPEG } from "../assets/javascript/downloadJpeg.js";
 import { downloadAsGIF } from "../assets/javascript/downloadGif.js";
 import { generatePhotoStrip } from "../assets/javascript/generatePhotoStrip.js";
@@ -22,6 +24,10 @@ function PhotoStripPreviewComponent() {
   const [isGeneratingGif, setIsGeneratingGif] = useState(false);
   const [frameColor, setFrameColor] = useState("#ffffff"); // Default white frame
   const [selectedFrame, setSelectedFrame] = useState(null); // Default no frame
+  const [showPromoModal, setShowPromoModal] = useState(false);
+  const [pendingDownloadType, setPendingDownloadType] = useState(null); // 'jpeg' or 'gif'
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const [hasDownloaded, setHasDownloaded] = useState(false);
 
   // Pastel color palette options
   const colorOptions = [
@@ -159,15 +165,85 @@ function PhotoStripPreviewComponent() {
         <Footer />
       </div>
     );
-  }
+  } // Smart modal display logic - "3-strike" system (JPEG downloads only)
+  const shouldShowModal = () => {
+    const jpegDownloadCount = parseInt(
+      localStorage.getItem("little-craft-download-count") || "0"
+    );
+    const nextJpegDownloadCount = jpegDownloadCount + 1;
+
+    // Show modal on strategic JPEG downloads: 1st, 5th, and 15th
+    const showOnDownloads = [1, 5, 15];
+    return showOnDownloads.includes(nextJpegDownloadCount);
+  };
+
+  const incrementDownloadCount = () => {
+    // Only increment for JPEG downloads (those that can trigger modals)
+    const currentCount = parseInt(
+      localStorage.getItem("little-craft-download-count") || "0"
+    );
+    localStorage.setItem(
+      "little-craft-download-count",
+      (currentCount + 1).toString()
+    );
+  };
 
   // Handler functions for downloads
   const handleDownloadJPEG = () => {
-    downloadAsJPEG(canvasRef.current, layout);
+    if (shouldShowModal()) {
+      setShowPromoModal(true);
+      setPendingDownloadType("jpeg");
+    } else {
+      downloadAsJPEG(canvasRef.current, layout);
+      incrementDownloadCount();
+    }
+  };
+  const handleDownloadGIF = () => {
+    // GIF downloads bypass the promotional modal and don't count toward 3-strike system
+    // since GIF is just animated version, not for printing
+    downloadAsGIF(photos, layout, setIsGeneratingGif);
+    // Note: No incrementDownloadCount() call here
+  }; // Execute the actual download after modal interaction
+  const proceedWithDownload = () => {
+    // Increment download count when user proceeds from modal
+    incrementDownloadCount();
+
+    // Only JPEG downloads go through the modal now
+    if (pendingDownloadType === "jpeg") {
+      downloadAsJPEG(canvasRef.current, layout);
+    }
+    setShowPromoModal(false);
+    setPendingDownloadType(null);
+  };
+  // Close modal without downloading
+  const closePromoModal = () => {
+    // Don't increment count if user closes without downloading
+    setShowPromoModal(false);
+    setPendingDownloadType(null);
   };
 
-  const handleDownloadGIF = () => {
-    downloadAsGIF(photos, layout, setIsGeneratingGif);
+  // Handle Get Quote button from PromoModal
+  const handleGetQuote = () => {
+    setShowPromoModal(false);
+    setShowQuoteModal(true);
+    setHasDownloaded(false); // Reset download state for quote flow
+  };
+  // Handle download from QuoteModal
+  const handleQuoteDownload = () => {
+    // Only JPEG downloads go through the quote modal
+    if (pendingDownloadType === "jpeg") {
+      downloadAsJPEG(canvasRef.current, layout);
+    }
+
+    incrementDownloadCount();
+    setHasDownloaded(true); // Mark as downloaded for quote modal
+  };
+
+  // Close quote modal
+  const closeQuoteModal = () => {
+    setShowQuoteModal(false);
+    setPendingDownloadType(null);
+    setHasDownloaded(false);
   };
 
   return (
@@ -268,7 +344,44 @@ function PhotoStripPreviewComponent() {
         <button onClick={takeNewPhotos} className="action-btn primary">
           Take New Photos
         </button>
-      </div>
+        {/* Debug helper - remove in production */}{" "}
+        <button
+          onClick={() => {
+            localStorage.removeItem("little-craft-download-count");
+            alert(
+              "JPEG download count reset! Next JPEG download will show modal."
+            );
+          }}
+          className="action-btn"
+          style={{
+            backgroundColor: "#6c757d",
+            fontSize: "0.8rem",
+            padding: "8px 12px",
+            marginTop: "10px",
+          }}
+        >
+          Reset JPEG Count (Debug)
+        </button>
+      </div>{" "}
+      {/* Promotional Modal */}
+      <PromoModal
+        isOpen={showPromoModal}
+        onClose={closePromoModal}
+        onProceedAnyway={proceedWithDownload}
+        onGetQuote={handleGetQuote}
+        downloadCount={
+          parseInt(localStorage.getItem("little-craft-download-count") || "0") +
+          1
+        }
+      />
+      {/* Quote Modal */}
+      <QuoteModal
+        isOpen={showQuoteModal}
+        onClose={closeQuoteModal}
+        onDownload={handleQuoteDownload}
+        hasDownloaded={hasDownloaded}
+        pendingDownloadType={pendingDownloadType}
+      />
       <Footer />
     </div>
   );

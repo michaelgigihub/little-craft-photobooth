@@ -1,0 +1,349 @@
+/* Promotional Modal Styles - Brand Aligned */
+
+/* Body scroll lock when modal is open */
+body.modal-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  /* Prevent layout shift by maintaining scrollbar space */
+  padding-right: var(--scrollbar-width, 0);
+}
+
+/* Calculate scrollbar width for layout stability */
+html {
+  --scrollbar-width: calc(100vw - 100%);
+}
+
+.promo-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(46, 63, 89, 0.8); /* Using brand navy with opacity */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: fadeInOverlay 0.3s ease-out;
+  overflow-y: auto; /* Allow overlay to scroll if needed */
+  /* Prevent bounce scroll on iOS */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.promo-modal {
+  background: var(--color-background-color); /* Brand cream background */
+  border-radius: 8px; /* Subtle, minimalist border radius */
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(46, 63, 89, 0.15); /* Subtle navy shadow */
+  animation: slideInModal 0.3s ease-out;
+  position: relative;
+  border: 1px solid rgba(46, 63, 89, 0.1); /* Very subtle border */
+  /* Ensure smooth scrolling within modal */
+  scroll-behavior: smooth;
+  /* Prevent modal from being too small on mobile */
+  min-height: 200px;
+}
+
+.promo-modal-header {
+  background: var(--color-primary); /* Brand navy */
+  color: var(--color-text-on-primary-white);
+  padding: 40px 30px;
+  text-align: center;
+  border-radius: 8px 8px 0 0;
+  position: relative;
+}
+
+.promo-modal-close {
+  position: absolute;
+  top: 20px;
+  right: 25px;
+  background: none;
+  border: none;
+  color: var(--color-text-on-primary-white);
+  font-size: 28px;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+  font-weight: 300;
+}
+
+.promo-modal-close:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.promo-modal-title {
+  font-family: var(--font-family-primary); /* Vintage Goods */
+  font-size: 2.2rem;
+  margin: 0 0 12px 0;
+  font-weight: normal;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  line-height: 1.2;
+}
+
+.promo-modal-title::before {
+  font-size: 1.4em;
+}
+
+/* Different emojis based on download count */
+.promo-modal-title[data-count="1"]::before {
+  content: "👋";
+}
+
+.promo-modal-title[data-count="5"]::before {
+  content: "🎉";
+}
+
+.promo-modal-title[data-count="15"]::before {
+  content: "⭐";
+}
+
+.promo-modal-title[data-count="quote"]::before {
+  content: "📋";
+}
+
+.promo-modal-title[data-count="downloaded"]::before {
+  content: "✅";
+}
+
+.promo-modal-subtitle {
+  font-family: var(--font-family-body); /* Ovo */
+  font-size: 1.1rem;
+  margin: 0;
+  opacity: 0.9;
+  font-weight: normal;
+}
+
+.promo-modal-body {
+  padding: 40px 30px;
+  text-align: center;
+  font-family: var(--font-family-body);
+  color: var(--color-text-on-primary-black);
+  line-height: 1.6;
+}
+
+.promo-modal-body p {
+  font-size: 1.05rem;
+  margin-bottom: 24px;
+}
+
+.promo-highlight {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.promo-features {
+  list-style: none;
+  padding: 0;
+  margin: 30px 0;
+  text-align: left;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.promo-features li {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  margin: 16px 0;
+  font-size: 1rem;
+  color: var(--color-text-on-primary-black);
+  opacity: 0;
+  animation: fadeInUp 0.4s ease-out forwards;
+  line-height: 1.5;
+}
+
+.promo-features li:nth-child(1) {
+  animation-delay: 0.1s;
+}
+.promo-features li:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.promo-features li:nth-child(3) {
+  animation-delay: 0.3s;
+}
+.promo-features li:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+.promo-features li::before {
+  content: "•";
+  color: var(--color-primary);
+  margin-right: 12px;
+  font-size: 1.2em;
+  flex-shrink: 0;
+  line-height: 1.2;
+  margin-top: 0.1em;
+}
+
+.promo-modal-actions {
+  padding: 0 30px 40px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.promo-btn {
+  padding: 16px 32px;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  font-family: var(--font-family-body);
+}
+
+.promo-btn-primary {
+  background: var(--color-primary);
+  color: var(--color-text-on-primary-white);
+  border: 2px solid var(--color-primary);
+}
+
+.promo-btn-primary:hover {
+  background: #2a2a2a;
+  transform: translateY(-1px);
+}
+
+.promo-btn-secondary {
+  background: transparent;
+  color: var(--color-primary);
+  border: 2px solid var(--color-primary);
+}
+
+.promo-btn-secondary:hover {
+  background: #bbbbbb;
+  color: var(--color-text-on-primary-white);
+}
+
+.promo-small-text {
+  font-size: 0.9rem;
+  color: var(--color-text-on-primary-black);
+  opacity: 0.7;
+  margin-top: 20px;
+  line-height: 1.4;
+  font-style: italic;
+}
+
+/* Animation keyframes */
+@keyframes fadeInOverlay {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInModal {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .promo-modal {
+    margin: 10px;
+    max-width: calc(100vw - 20px);
+    border-radius: 6px;
+    max-height: 85vh; /* Reduce height on mobile */
+  }
+  .promo-modal-header {
+    padding: 25px 20px; /* Reduced padding for mobile */
+    border-radius: 6px 6px 0 0;
+  }
+
+  .promo-modal-title {
+    font-size: 1.6rem; /* Smaller title on mobile */
+  }
+
+  .promo-modal-subtitle {
+    font-size: 1rem;
+  }
+
+  .promo-modal-body {
+    padding: 25px 20px; /* Reduced padding for mobile */
+  }
+
+  .promo-modal-body p {
+    font-size: 1rem;
+  }
+
+  .promo-modal-actions {
+    padding: 0 20px 25px 20px; /* Reduced bottom padding */
+  }
+
+  .promo-btn {
+    padding: 14px 24px;
+    font-size: 0.95rem;
+  }
+
+  .promo-features li {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .promo-modal-overlay {
+    padding: 5px; /* Reduce overlay padding on small screens */
+  }
+
+  .promo-modal-header {
+    padding: 20px 15px; /* Further reduced padding */
+  }
+
+  .promo-modal-title {
+    font-size: 1.4rem; /* Even smaller on very small screens */
+  }
+
+  .promo-modal-body {
+    padding: 20px 15px; /* Further reduced padding */
+  }
+
+  .promo-modal-actions {
+    padding: 0 15px 20px 15px; /* Reduced padding */
+  }
+
+  .promo-features li {
+    font-size: 0.9rem;
+    margin: 12px 0; /* Tighter spacing */
+  }
+
+  .promo-small-text {
+    font-size: 0.85rem;
+  }
+}

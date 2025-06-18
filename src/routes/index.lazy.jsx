@@ -76,12 +76,6 @@ function Index() {
                 />
                 <div className="layout-info">
                   {layout.photoCount} Photos
-                  {layout.id === "c" && (
-                    <div className="layout-ratio">{"(2:6 ratio)"}</div>
-                  )}
-                  {layout.id === "d" && (
-                    <div className="layout-ratio">{"(4:6 ratio)"}</div>
-                  )}
                 </div>
               </button>
             </div>
