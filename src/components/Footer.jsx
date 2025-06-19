@@ -9,9 +9,16 @@ function Footer() {
         <img src={logoImage} alt="Little Crafts Logo" />
       </div>
       <div className="footer-contact">
+        {" "}
         <div className="contact-item">
           <Phone size={18} style={{ color: "var(--color-primary)" }} />
-          <span>+63 917 772 1157</span>
+          <a
+            href="tel:+63 917 772 1157"
+            className="footer-email"
+            aria-label="Call us"
+          >
+            +63 917 772 1157
+          </a>
         </div>{" "}
         <div className="contact-item">
           <Mail size={18} style={{ color: "var(--color-primary)" }} />

@@ -39,7 +39,7 @@ function About() {
   const navigationItems = [
     { id: "about", label: "About Us" },
     { id: "services", label: "Services Offered" },
-    { id: "gallery", label: "Our Works" },
+    { id: "gallery", label: "Our Crafts" },
     { id: "story", label: "Our Story" },
     { id: "footer", label: "Contact" },
   ];
