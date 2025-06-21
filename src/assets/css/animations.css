@@ -109,10 +109,10 @@
 }
 
 /* Mobile typewriter adjustment */
-/* @media (max-width: 1180px) {
+@media (max-width: 1195px) {
   @keyframes typing {
     to {
       width: 17ch;
     }
   }
-} */
+}
