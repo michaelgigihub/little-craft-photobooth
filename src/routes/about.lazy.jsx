@@ -48,8 +48,8 @@ function About() {
     // Set up intersection observer for animations
     const animationOptions = {
       root: null, // viewport
-      rootMargin: "100px 0px 100px 0px", // trigger when element is 100px away from entering viewport (very early)
-      threshold: 0.1, // trigger as soon as any part of the element is visible
+      rootMargin: "80px 0px 80px 0px", // trigger when element is 100px away from entering viewport (very early)
+      threshold: 0.22, // trigger as soon as any part of the element is visible
     };
 
     const animationObserver = new IntersectionObserver((entries) => {
@@ -108,9 +108,35 @@ function About() {
       animationObserver.observe(section);
       navObserver.observe(section); // Observe with both observers
       sectionRefs.current.push(section);
-    });
+    }); // Set up intersection observer for gallery items on mobile
+    const isMobile = window.innerWidth <= 768;
+    let galleryObserver = null;
+    let galleryImages = [];
 
-    // Clean up
+    if (isMobile) {
+      const galleryOptions = {
+        root: null,
+        rootMargin: "-20% 0px -20% 0px", // trigger
+        threshold: 0.5,
+      };
+
+      galleryObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          const galleryItem = entry.target.closest(".gallery-item");
+          if (entry.isIntersecting) {
+            galleryItem?.classList.add("mobile-centered");
+          } else {
+            galleryItem?.classList.remove("mobile-centered");
+          }
+        });
+      }, galleryOptions);
+
+      // Observe all gallery images
+      galleryImages = document.querySelectorAll(".gallery-item img");
+      galleryImages.forEach((img) => {
+        galleryObserver.observe(img);
+      });
+    } // Clean up
     return () => {
       if (sectionRefs.current.length > 0) {
         sectionRefs.current.forEach((section) => {
@@ -118,6 +144,13 @@ function About() {
             animationObserver.unobserve(section);
             navObserver.unobserve(section);
           }
+        });
+      }
+
+      // Clean up gallery observer
+      if (galleryObserver && galleryImages.length > 0) {
+        galleryImages.forEach((img) => {
+          galleryObserver.unobserve(img);
         });
       }
     };
@@ -156,10 +189,10 @@ function About() {
       <div className="about-container">
         {/* Hero Section */}
         <div className="about-hero">
-          <h1 className="about-title">Little Crafts by WRT</h1>
-          <p className="about-subtitle">
-            Made by hand, lend by grace. 
-          </p>
+          <h1 className="about-title">
+            <span className="typewriter-text">Little Crafts by WRT</span>
+          </h1>
+          <p className="about-subtitle">"Made by hand, lend by grace."</p>
         </div>
 
         {/* Main Content */}
@@ -171,9 +204,7 @@ function About() {
               About Us
             </h2>
             <div className="section-content">
-              <p>
-                At Little Crafts by WRT, creativity meets craftsmanship.
-              </p>
+              <p>At Little Crafts by WRT, creativity meets craftsmanship.</p>
               <p>
                 We focus on quality and customer satisfaction, making sure each
                 product reflects our clients' needs and ideas. Whether you're
@@ -397,7 +428,8 @@ function About() {
           <h2 className="cta-title">Ready to Create Memories?</h2>
           <p className="cta-description">
             Experience our interactive photobooth and capture moments that will
-            bring smiles for years to come. Perfect for creating lasting memories.
+            bring smiles for years to come. Perfect for creating lasting
+            memories.
           </p>
           <Link to="/" className="cta-button">
             Start Photobooth <ArrowRight size={20} />
@@ -412,3 +444,5 @@ function About() {
     </div>
   );
 }
+
+export default About;

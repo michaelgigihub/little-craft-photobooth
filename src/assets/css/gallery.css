@@ -196,3 +196,34 @@
     padding: 0;
   }
 }
+
+/* Mobile-specific hover animation triggered by intersection observer */
+@media (max-width: 768px) {
+  /* Disable default hover on mobile */
+  .gallery-item:hover {
+    transform: none !important;
+  }
+
+  .gallery-item:hover img {
+    transform: none !important;
+  }
+
+  .gallery-item:hover .gallery-overlay {
+    opacity: 0 !important;
+  }
+
+  /* Enable animation only when image is centered */
+  .gallery-item.mobile-centered {
+    transform: translateY(-5px) !important;
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15) !important;
+    z-index: 10;
+  }
+
+  .gallery-item.mobile-centered img {
+    transform: scale(1.05) !important;
+  }
+
+  .gallery-item.mobile-centered .gallery-overlay {
+    opacity: 1 !important;
+  }
+}
