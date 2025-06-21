@@ -9,6 +9,7 @@ import PromoModal from "../components/PromoModal";
 import QuoteModal from "../components/QuoteModal";
 import { downloadAsJPEG } from "../assets/javascript/downloadJpeg.js";
 import { downloadAsGIF } from "../assets/javascript/downloadGif.js";
+import { downloadIndividualImages } from "../assets/javascript/downloadIndividualImages.js";
 import { generatePhotoStrip } from "../assets/javascript/generatePhotoStrip.js";
 
 export const Route = createLazyFileRoute("/photo-strip-preview")({
@@ -203,6 +204,13 @@ function PhotoStripPreviewComponent() {
     // since GIF is just animated version, not for printing
     downloadAsGIF(photos, layout, setIsGeneratingGif);
     // Note: No incrementDownloadCount() call here
+  };
+
+  const handleDownloadIndividualImages = () => {
+    // Individual image downloads bypass the promotional modal and don't count toward 3-strike system
+    // since these are just individual photos, not the main photo strip
+    downloadIndividualImages(photos, layout);
+    // Note: No incrementDownloadCount() call here
   }; // Execute the actual download after modal interaction
   const proceedWithDownload = () => {
     // Increment download count when user proceeds from modal
@@ -328,7 +336,7 @@ function PhotoStripPreviewComponent() {
               onClick={handleDownloadJPEG}
               className="action-btn download"
             >
-              Download as JPEG
+              Download Strip
             </button>
             <button
               onClick={handleDownloadGIF}
@@ -336,6 +344,12 @@ function PhotoStripPreviewComponent() {
               className="action-btn download"
             >
               {isGeneratingGif ? "Creating GIF..." : "Download as GIF"}
+            </button>{" "}
+            <button
+              onClick={handleDownloadIndividualImages}
+              className="action-btn download"
+            >
+              Download Photos
             </button>
           </div>
         </div>

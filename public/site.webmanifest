@@ -4,7 +4,7 @@
   "description": "Interactive photobooth by Little Craft - Create and print beautiful photo memories",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FEF6E8",
+"background_color": "#FEF6E8",
   "theme_color": "#2E3F59",
   "orientation": "portrait-primary",
   "icons": [
