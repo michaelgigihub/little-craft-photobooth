@@ -69,9 +69,9 @@
 
 /* Adjust canvas size for larger screens */
 @media (min-width: 768px) {
-  .photo-strip-canvas {
+/*   .photo-strip-canvas {
     max-width: 30%;
-  }
+  } */
   /* Special width for layout D (2 photos per row) */
   .photo-strip-canvas.layout-d {
     max-width: 48%;

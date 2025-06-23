@@ -358,24 +358,6 @@ function PhotoStripPreviewComponent() {
         <button onClick={takeNewPhotos} className="action-btn primary">
           Take New Photos
         </button>
-        {/* Debug helper - remove in production */}{" "}
-        <button
-          onClick={() => {
-            localStorage.removeItem("little-craft-download-count");
-            alert(
-              "JPEG download count reset! Next JPEG download will show modal."
-            );
-          }}
-          className="action-btn"
-          style={{
-            backgroundColor: "#6c757d",
-            fontSize: "0.8rem",
-            padding: "8px 12px",
-            marginTop: "10px",
-          }}
-        >
-          Reset JPEG Count (Debug)
-        </button>
       </div>{" "}
       {/* Promotional Modal */}
       <PromoModal
