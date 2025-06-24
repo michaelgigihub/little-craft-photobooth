@@ -4,7 +4,6 @@ import "./index.css";
 import App from "./App.jsx";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
-import { SpeedInsights } from "@vercel/speed-insights/react";
 
 
 const router = createRouter({ routeTree });
@@ -13,6 +12,5 @@ createRoot(document.getElementById("root")).render(
   <StrictMode>
     <RouterProvider router={router} />
     <App />
-    <SpeedInsights />
   </StrictMode>
 );
