@@ -148,10 +148,12 @@ export const generatePhotoStrip = async ({
       case "a": // 4 strips (2:6)
       case "d": // 2 strips (4:6)
       case "b": // 3 strips (2:6)
-        ctx.font = `50px ${bodyFont}`;
+        ctx.font = `60px ${bodyFont}`;
+        ctx.bottomPadding = 70;
         break;
       case "c": // 2 strips (2:6)
-        ctx.font = `25px ${bodyFont}`;
+        ctx.font = `35px ${bodyFont}`;
+        ctx.bottomPadding = 45;
         break;
       default:
         ctx.font = `0px ${bodyFont}`;
@@ -169,7 +171,7 @@ export const generatePhotoStrip = async ({
     const watermarkWidth = ctx.measureText(watermarkText).width;
     // Position: center bottom in the padding area
     const watermarkX = canvasWidth / 2 - watermarkWidth / 2;
-    const watermarkY = canvasHeight - 40; // Centered in bottom padding
+    const watermarkY = canvasHeight - ctx.bottomPadding; // Centered in bottom padding
     ctx.fillText(watermarkText, watermarkX, watermarkY);
     ctx.restore();
 
