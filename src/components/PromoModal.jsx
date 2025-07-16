@@ -1,6 +1,12 @@
 import { useEffect } from "react";
 import "../assets/css/promo-modal.css";
 
+const features = [
+  "High-quality photo paper that lasts",
+  "Vibrant colors that pop",
+  "Perfect keepsake for events & memories",
+  "Fast, affordable local printing",
+]; 
 const PromoModal = ({
   isOpen,
   onClose,
@@ -36,12 +42,7 @@ const PromoModal = ({
           subtitle: "Love your first photo strip?",
           message:
             "Your photo strip looks amazing! Why not bring it to life with a professional print from Little Craft?",
-          features: [
-            "High-quality photo paper that lasts",
-            "Vibrant colors that pop",
-            "Perfect keepsake for events & memories",
-            "Fast, affordable local printing",
-          ],
+          features,
         };
       case 5:
         return {
@@ -49,12 +50,7 @@ const PromoModal = ({
           subtitle: "Loving the photo booth experience?",
           message:
             "We've noticed you're creating lots of memories! Consider getting your favorite photos professionally printed with Little Craft.",
-          features: [
-            "Bundle discounts for multiple prints",
-            "Premium photo paper options",
-            "Perfect for sharing with friends & family",
-            "Local pickup or delivery available",
-          ],
+          features,
         };
       case 15:
         return {
@@ -62,12 +58,7 @@ const PromoModal = ({
           subtitle: "You've created 15 amazing photo strips!",
           message:
             "You're clearly loving the photo booth! As a valued user, let us help you preserve these special moments with professional printing services.",
-          features: [
-            "Special loyalty discounts available",
-            "Bulk printing packages",
-            "Custom framing options",
-            "Event photography services",
-          ],
+          features,
         };
       default:
         return {
@@ -151,14 +142,14 @@ const PromoModal = ({
         </div>{" "}
         <div className="promo-modal-actions">
           <button className="promo-btn promo-btn-primary" onClick={onGetQuote}>
-            Get a Quote for Printing
+            Print with Little Craft
           </button>
 
           <button
             className="promo-btn promo-btn-secondary"
             onClick={onProceedAnyway}
           >
-            Download Anyway
+            Download Only
           </button>
 
           <p className="promo-small-text">

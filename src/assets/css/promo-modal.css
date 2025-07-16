@@ -98,27 +98,6 @@ html {
   font-size: 1.4em;
 }
 
-/* Different emojis based on download count */
-.promo-modal-title[data-count="1"]::before {
-  content: "👋";
-}
-
-.promo-modal-title[data-count="5"]::before {
-  content: "🎉";
-}
-
-.promo-modal-title[data-count="15"]::before {
-  content: "⭐";
-}
-
-.promo-modal-title[data-count="quote"]::before {
-  content: "📋";
-}
-
-.promo-modal-title[data-count="downloaded"]::before {
-  content: "✅";
-}
-
 .promo-modal-subtitle {
   font-family: var(--font-family-body); /* Ovo */
   font-size: 1.1rem;

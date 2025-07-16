@@ -72,7 +72,7 @@ const QuoteModal = ({
           </h2>
           <p className="promo-modal-subtitle">
             {hasDownloaded
-              ? "Your photo is downloaded. Let's get you a printing quote!"
+              ? "Your photo is downloaded"
               : "Download your photo first to get a printing quote"}
           </p>
         </div>
@@ -80,36 +80,15 @@ const QuoteModal = ({
         <div className="promo-modal-body">
           {!hasDownloaded ? (
             <>
-              <p>
-                To provide you with an accurate printing quote, please download
-                your
-                <span className="promo-highlight">
-                  {" "}
-                  {pendingDownloadType.toUpperCase()} photo strip
-                </span>{" "}
-                first.
-              </p>
             </>
           ) : (
             <>
               <p>
-                Great! Your photo strip has been downloaded. Now let's get you
-                connected with{" "}
+                Now let's get you connected with{" "}
                 <span className="promo-highlight">Little Craft</span> for
-                professional printing services.
+                printing services.
               </p>
-
-              <ul className="promo-features">
-                <li>High-quality photo paper options</li>
-                <li>Custom sizing and formats</li>
-                <li>Fast turnaround times</li>
-                <li>Competitive pricing for bulk orders</li>
-              </ul>
-
-              <p>
-                Click the button below to message us on Facebook with your
-                printing requirements!
-              </p>
+              <p>Click the button below to message us on Facebook</p>
             </>
           )}
         </div>
