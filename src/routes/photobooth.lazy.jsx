@@ -58,43 +58,33 @@ function PhotoboothComponent() {
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
       navigator.userAgent
     );
-  // Set up webcam constraints for better quality and mobile compatibility
+  // Set up webcam constraints for maximum quality
+  // Request highest resolution possible, cropping will be done at capture time
   const getVideoConstraints = () => {
-    // Calculate aspect ratio based on layout
-    const aspectRatio = layout === "c" ? 540 / 713 : 4 / 3;
-
     if (isMobile) {
       return {
         width: { ideal: 1920, min: 640 },
-        height: { ideal: layout === "c" ? 2534 : 1440, min: 480 },
-        facingMode: facingMode, // Use state variable
-        aspectRatio: { ideal: aspectRatio },
+        height: { ideal: 1080, min: 480 },
+        facingMode: facingMode,
         frameRate: { ideal: 30, min: 15 },
-        // Mobile-specific optimizations
+        // Request maximum resolution without aspect ratio constraint
         advanced: [
-          { width: { min: 640, ideal: 1920, max: 1920 } },
-          {
-            height: {
-              min: 480,
-              ideal: layout === "c" ? 2534 : 1440,
-              max: layout === "c" ? 2534 : 1440,
-            },
-          },
-          { aspectRatio: { ideal: aspectRatio } },
+          { width: { min: 640, ideal: 1920, max: 3840 } },
+          { height: { min: 480, ideal: 1080, max: 2160 } },
           { frameRate: { ideal: 30 } },
         ],
       };
     } else {
       return {
-        width: { ideal: 1920, min: 640 },
-        height: { ideal: layout === "c" ? 2534 : 1440, min: 480 },
-        facingMode: facingMode, // Use state variable
-        aspectRatio: { ideal: aspectRatio },
+        width: { ideal: 1920, min: 1280 },
+        height: { ideal: 1080, min: 720 },
+        facingMode: facingMode,
         frameRate: { ideal: 30, min: 15 },
+        // Request maximum resolution without aspect ratio constraint
         advanced: [
-          { width: { min: 1280 } },
-          { height: { min: layout === "c" ? 1690 : 960 } },
-          { aspectRatio: { exact: aspectRatio } },
+          { width: { min: 1280, ideal: 1920, max: 3840 } },
+          { height: { min: 720, ideal: 1080, max: 2160 } },
+          { frameRate: { ideal: 30 } },
         ],
       };
     }
@@ -232,18 +222,21 @@ function PhotoboothComponent() {
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
 
-      // Set canvas dimensions based on layout
+      // Set high-resolution output dimensions based on layout
+      // Using 4x scale for print-quality output
       let targetWidth, targetHeight, targetAspect;
 
       if (layout === "c") {
         // Layout C uses 540:713 aspect ratio
-        targetWidth = 1620; // 3x scale of 540 for high quality
-        targetHeight = 2139; // 3x scale of 713 for high quality
+        // Output at 4x scale: 2160×2852 for high-quality prints
+        targetWidth = 2160;
+        targetHeight = 2852;
         targetAspect = 540 / 713;
       } else {
         // Other layouts use 4:3 aspect ratio
-        targetWidth = 1920;
-        targetHeight = 1440;
+        // Output at higher resolution: 2880×2160 for high-quality prints
+        targetWidth = 2880;
+        targetHeight = 2160;
         targetAspect = 4 / 3;
       }
 
@@ -445,16 +438,21 @@ function PhotoboothComponent() {
 
     const img = new Image();
     img.onload = () => {
-      // Set canvas dimensions based on layout
+      // Set high-resolution output dimensions based on layout
+      // Using 4x scale for print-quality output (same as camera capture)
       let targetWidth, targetHeight, targetAspect;
 
       if (layout === "c") {
-        targetWidth = 1620; // 3x scale of 540 for high quality
-        targetHeight = 2139; // 3x scale of 713 for high quality
+        // Layout C uses 540:713 aspect ratio
+        // Output at 4x scale: 2160×2852 for high-quality prints
+        targetWidth = 2160;
+        targetHeight = 2852;
         targetAspect = 540 / 713;
       } else {
-        targetWidth = 1920;
-        targetHeight = 1440;
+        // Other layouts use 4:3 aspect ratio
+        // Output at higher resolution: 2880×2160 for high-quality prints
+        targetWidth = 2880;
+        targetHeight = 2160;
         targetAspect = 4 / 3;
       }
 

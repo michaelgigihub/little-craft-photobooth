@@ -67,26 +67,25 @@ export const generatePhotoStrip = async ({
         cols = 1;
         rows = 4;
         photoWidth = stripWidth - canvasPadding.left * 2;
-        // For 2:6 ratio strip, distribute height evenly among 4 photos plus margins
-        photoHeight = (3 / 4) * photoWidth; //to make it 4:3 aspect ratio base on the photo width
+        photoHeight = (3 / 4) * photoWidth; // 4:3 aspect ratio
         break;
       case "b": // 3 photos, 1 per row (standard 2:6 strip)
         cols = 1;
         rows = 3;
-        photoWidth = stripWidth - canvasPadding.left * 2; // fix size considering the side margins
-        photoHeight = (3 / 4) * photoWidth;
+        photoWidth = stripWidth - canvasPadding.left * 2;
+        photoHeight = (3 / 4) * photoWidth; // 4:3 aspect ratio
         break;
-      case "c": // 2 photos, 2:6 ratio
+      case "c": // 2 photos, 540:713 ratio - scaled 4x
         cols = 1;
         rows = 2;
-        photoWidth = 540;
-        photoHeight = 713; // Maintain 4:3 aspect ratio
+        photoWidth = 2160; // 4x of 540
+        photoHeight = 2852; // 4x of 713
         break;
       case "d": // 2 photos, 4:6 ratio
         cols = 1;
         rows = 2;
         photoWidth = stripWidth - canvasPadding.left * 2;
-        photoHeight = (3 / 4) * photoWidth; // Maintain 4:3 aspect ratio
+        photoHeight = (3 / 4) * photoWidth; // 4:3 aspect ratio
         break;
       default:
         cols = 1;
@@ -143,17 +142,17 @@ export const generatePhotoStrip = async ({
     const rootStyles = getComputedStyle(document.documentElement);
     const bodyFont = rootStyles.getPropertyValue("--font-family-body").trim();
 
-    // Set watermark font size based on layout
+    // Set watermark font size based on layout - scaled 4x for high-resolution output
     switch (layout) {
       case "a": // 4 strips (2:6)
       case "d": // 2 strips (4:6)
       case "b": // 3 strips (2:6)
-        ctx.font = `60px ${bodyFont}`;
-        ctx.bottomPadding = 70;
+        ctx.font = `240px ${bodyFont}`; // 4x of 60px
+        ctx.bottomPadding = 280; // 4x of 70
         break;
       case "c": // 2 strips (2:6)
-        ctx.font = `35px ${bodyFont}`;
-        ctx.bottomPadding = 45;
+        ctx.font = `140px ${bodyFont}`; // 4x of 35px
+        ctx.bottomPadding = 180; // 4x of 45
         break;
       default:
         ctx.font = `0px ${bodyFont}`;

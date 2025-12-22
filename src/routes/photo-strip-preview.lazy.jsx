@@ -7,10 +7,12 @@ import liloStitchFrameB from "../assets/images/frames/lilo_stitch_frames/lilo_st
 import Footer from "../components/Footer";
 import PromoModal from "../components/PromoModal";
 import QuoteModal from "../components/QuoteModal";
+import QRCodeShare from "../components/QRCodeShare";
 import { downloadAsJPEG } from "../assets/javascript/downloadJpeg.js";
 import { downloadAsGIF } from "../assets/javascript/downloadGif.js";
 import { downloadIndividualImages } from "../assets/javascript/downloadIndividualImages.js";
 import { generatePhotoStrip } from "../assets/javascript/generatePhotoStrip.js";
+import { fetchPhotosFromSupabase } from "../assets/javascript/photoSharingService.js";
 
 export const Route = createLazyFileRoute("/photo-strip-preview")({
   component: PhotoStripPreviewComponent,
@@ -19,7 +21,6 @@ export const Route = createLazyFileRoute("/photo-strip-preview")({
 function PhotoStripPreviewComponent() {
   const navigate = useNavigate();
   const { photoSession, resetSession, hasActiveSession } = usePhotoContext();
-  const { layout, photoCount, photos } = photoSession;
   const canvasRef = useRef(null);
   const [stripGenerated, setStripGenerated] = useState(false);
   const [isGeneratingGif, setIsGeneratingGif] = useState(false);
@@ -29,6 +30,19 @@ function PhotoStripPreviewComponent() {
   const [pendingDownloadType, setPendingDownloadType] = useState(null); // 'jpeg' or 'gif'
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [hasDownloaded, setHasDownloaded] = useState(false);
+  
+  // Shared session state
+  const [isSharedSession, setIsSharedSession] = useState(false);
+  const [sharedPhotos, setSharedPhotos] = useState([]);
+  const [sharedLayout, setSharedLayout] = useState(null);
+  const [sharedPhotoCount, setSharedPhotoCount] = useState(0);
+  const [isLoadingShared, setIsLoadingShared] = useState(false);
+  const [sharedError, setSharedError] = useState(null);
+
+  // Determine which photos/layout to use (shared or local session)
+  const photos = isSharedSession ? sharedPhotos : photoSession.photos;
+  const layout = isSharedSession ? sharedLayout : photoSession.layout;
+  const photoCount = isSharedSession ? sharedPhotoCount : photoSession.photoCount;
 
   // Pastel color palette options
   const colorOptions = [
@@ -56,64 +70,66 @@ function PhotoStripPreviewComponent() {
   ];
 
   // Photo strip width based on layout
+  // Using 4x scale for print-quality output
   const getStripWidth = () => {
     switch (layout) {
       case "a":
       case "b":
       case "d":
-        return 1200; // Layout A or C: 1200px width
+        return 4800; // 4x scale of 1200px for high-quality prints
       case "c":
-        return 600; // Layout B or D: 600px width
+        return 2400; // 4x scale of 600px for high-quality prints
       default:
-        return 0; // Default: 0px (to be determined for layouts C and D)
+        return 0;
     }
   };
 
   const stripWidth = getStripWidth();
 
+  // Gap between photos - scaled 4x for high-resolution output
   const getPhotoGap = () => {
     switch (layout) {
       case "a":
-        return 30;
+        return 120; // 4x of 30
       case "b":
-        return 120;
+        return 480; // 4x of 120
       case "c":
       case "d":
-        return 40;
+        return 160; // 4x of 40
       default:
-        return 0; // Default: 0px (to be determined for layouts C and D)
+        return 0;
     }
   };
-  const photoGap = getPhotoGap(); // Margin between photos
+  const photoGap = getPhotoGap();
 
-  // Adjust padding based on layout
+  // Adjust padding based on layout - scaled 4x for high-resolution output
   let canvasPadding;
   switch (layout) {
     case "a":
-      canvasPadding = { top: 120, left: 67 };
+      canvasPadding = { top: 480, left: 268 }; // 4x of { top: 120, left: 67 }
       break;
     case "b":
-      canvasPadding = { top: 160, left: 60 };
+      canvasPadding = { top: 640, left: 240 }; // 4x of { top: 160, left: 60 }
       break;
     case "c":
-      canvasPadding = { top: 60, left: 30 };
+      canvasPadding = { top: 240, left: 120 }; // 4x of { top: 60, left: 30 }
       break;
     case "d":
-      canvasPadding = { top: 70, left: 97 };
+      canvasPadding = { top: 280, left: 388 }; // 4x of { top: 70, left: 97 }
       break;
     default:
       canvasPadding = { top: 0, left: 0 };
   }
 
-  // Calculate height to ensure standard 2:6 aspect ratio for layouts A and B
+  // Calculate height - scaled 4x for high-resolution output
   const getStripHeight = () => {
     switch (layout) {
       case "a": // 4 photos, 1 per row - standard 2:6 aspect ratio
       case "b": // 3 photos, 1 per row - standard 2:6 aspect ratio
-        return 3600;
+        return 14400; // 4x of 3600
       case "c": // 2 photos, 1 per row - standard 4:6 aspect ratio
       case "d": // 2 photos, 1 per row - standard 2:6 aspect ratio
-        return 1800;
+        return 7200; // 4x of 1800
       default:
         return stripWidth * 3; // Default to 2:6 ratio
     }
@@ -129,12 +145,56 @@ function PhotoStripPreviewComponent() {
     resetSession();
     navigate({ to: "/" });
   };
-  // Redirect to home if no session is active or no photos captured
+
+  // Check for shared session URL parameter
   useEffect(() => {
-    if (!hasActiveSession() || !photos || photos.length === 0) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get("session");
+
+    if (sessionId) {
+      setIsSharedSession(true);
+      setIsLoadingShared(true);
+      
+      fetchPhotosFromSupabase(sessionId)
+        .then((result) => {
+          if (result.success) {
+            setSharedPhotos(result.photos);
+            setSharedLayout(result.layout);
+            setSharedPhotoCount(result.photoCount);
+          } else {
+            setSharedError(result.error || "Failed to load shared photos");
+          }
+        })
+        .catch((err) => {
+          setSharedError(err.message || "An error occurred");
+        })
+        .finally(() => {
+          setIsLoadingShared(false);
+        });
+    }
+  }, []);
+
+  // Redirect to home if no session (local or shared) is active
+  useEffect(() => {
+    // Don't redirect while loading shared session
+    if (isLoadingShared) return;
+    
+    // For shared sessions, check if we have shared photos
+    if (isSharedSession) {
+      if (sharedError || (!isLoadingShared && sharedPhotos.length === 0)) {
+        // Only redirect if there's an error or no photos after loading
+        if (sharedError) {
+          navigate({ to: "/" });
+        }
+      }
+      return;
+    }
+    
+    // For local sessions, use the original logic
+    if (!hasActiveSession() || !photoSession.photos || photoSession.photos.length === 0) {
       navigate({ to: "/" });
     }
-  }, [hasActiveSession, photos, navigate]);
+  }, [hasActiveSession, photoSession.photos, navigate, isSharedSession, sharedPhotos, isLoadingShared, sharedError]);
 
   // Generate the photo strip when component mounts or frame color changes
   useEffect(() => {
@@ -158,7 +218,34 @@ function PhotoStripPreviewComponent() {
       setStripGenerated,
     });
   }; // Early return check - must be AFTER all hooks have been called
-  if (!hasActiveSession() || !photos || photos.length === 0) {
+  
+  // Show loading state for shared sessions
+  if (isLoadingShared) {
+    return (
+      <div className="photo-strip-container page-container">
+        <h2>Loading Shared Photos...</h2>
+        <p>Please wait while we fetch your photos.</p>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Show error state for shared sessions
+  if (isSharedSession && sharedError) {
+    return (
+      <div className="photo-strip-container page-container">
+        <h2>Unable to Load Photos</h2>
+        <p>{sharedError}</p>
+        <button onClick={() => navigate({ to: "/" })} className="action-btn primary">
+          Go to Home
+        </button>
+        <Footer />
+      </div>
+    );
+  }
+
+  // For local sessions without photos
+  if (!isSharedSession && (!hasActiveSession() || !photos || photos.length === 0)) {
     return (
       <div className="photo-strip-container page-container">
         <h2>Redirecting...</h2>
@@ -352,6 +439,11 @@ function PhotoStripPreviewComponent() {
               Download Photos
             </button>
           </div>
+          
+          {/* QR Code Share - only show for local sessions */}
+          {!isSharedSession && (
+            <QRCodeShare photos={photos} layout={layout} />
+          )}
         </div>
       )}{" "}
       <div className="navigation-controls">
