@@ -1,8 +1,9 @@
 import { createLazyFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useRef, useCallback, useEffect } from "react";
 import Webcam from "react-webcam";
-import { SwitchCamera } from "lucide-react";
+import { SwitchCamera, Sparkles } from "lucide-react";
 import { usePhotoContext } from "../context/PhotoContext";
+import { useBeautyFilter } from "../hooks/useBeautyFilter";
 import "../assets/css/photobooth.lazy.css";
 
 export const Route = createLazyFileRoute("/photobooth")({
@@ -43,9 +44,26 @@ function PhotoboothComponent() {
   const [tempUploadedFile, setTempUploadedFile] = useState(null);
   const [cropFrameStyle, setCropFrameStyle] = useState({});
   const [isFlashing, setIsFlashing] = useState(false);
+  const [beautyEnabled, setBeautyEnabled] = useState(true);
+  const [beautyIntensity, setBeautyIntensity] = useState(0.5);
   const webcamRef = useRef(null);
   const cropCanvasRef = useRef(null);
   const previewImageRef = useRef(null);
+
+  // Beauty filter hook
+  const {
+    isInitialized: beautyInitialized,
+    isLoading: beautyLoading,
+    initialize: initializeBeauty,
+    applyBeautyFilterToImage,
+  } = useBeautyFilter();
+
+  // Initialize beauty filter when enabled
+  useEffect(() => {
+    if (beautyEnabled && !beautyInitialized && !beautyLoading) {
+      initializeBeauty();
+    }
+  }, [beautyEnabled, beautyInitialized, beautyLoading, initializeBeauty]);
 
   // Debug log
   console.log("Current state:", {
@@ -315,10 +333,26 @@ function PhotoboothComponent() {
 
       // Convert to high-quality JPEG
       const imageSrc = canvas.toDataURL("image/jpeg", 1.0);
-      addPhoto(imageSrc);
-      console.log(
-        `Captured photo ${photoSession.photos.length + 1} of ${photoCount} - Size: ${targetWidth}x${targetHeight}`
-      );
+
+      // Apply beauty filter if enabled
+      if (beautyEnabled && beautyInitialized) {
+        applyBeautyFilterToImage(imageSrc, { intensity: beautyIntensity })
+          .then((filteredSrc) => {
+            addPhoto(filteredSrc);
+            console.log(
+              `Captured photo ${photoSession.photos.length + 1} of ${photoCount} with beauty filter - Size: ${targetWidth}x${targetHeight}`
+            );
+          })
+          .catch(() => {
+            // Fallback to original if filter fails
+            addPhoto(imageSrc);
+          });
+      } else {
+        addPhoto(imageSrc);
+        console.log(
+          `Captured photo ${photoSession.photos.length + 1} of ${photoCount} - Size: ${targetWidth}x${targetHeight}`
+        );
+      }
     }
   }, [
     webcamRef,
@@ -329,6 +363,10 @@ function PhotoboothComponent() {
     facingMode,
     layout,
     setIsFlashing,
+    beautyEnabled,
+    beautyInitialized,
+    beautyIntensity,
+    applyBeautyFilterToImage,
   ]);
   // Function to handle single countdown and photo capture
   const handleCountdown = useCallback(() => {
@@ -669,6 +707,23 @@ function PhotoboothComponent() {
                   }
                 >
                   <SwitchCamera size={24} />
+                </button>
+
+                {/* Beauty mode toggle button */}
+                <button
+                  className={`beauty-toggle-btn ${beautyEnabled ? "active" : ""} ${beautyLoading ? "loading" : ""}`}
+                  onClick={() => setBeautyEnabled(!beautyEnabled)}
+                  disabled={capturing}
+                  title={
+                    beautyLoading
+                      ? "Loading beauty filter..."
+                      : beautyEnabled
+                        ? "Disable beauty mode"
+                        : "Enable beauty mode (smooth skin)"
+                  }
+                >
+                  <Sparkles size={20} />
+                  {beautyLoading && <span className="beauty-loading-spinner" />}
                 </button>
               </div>
             </>
