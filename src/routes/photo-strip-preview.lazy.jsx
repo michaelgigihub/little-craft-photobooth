@@ -4,6 +4,7 @@ import { usePhotoContext } from "../context/PhotoContext";
 import "../assets/css/photo-strip-preview.lazy.css";
 import "../assets/css/footer.css";
 import liloStitchFrameB from "../assets/images/frames/lilo_stitch_frames/lilo_stitch_frame_b.png";
+import xmasFrameB from "../assets/images/frames/xmas_party_frames/xmas_frame_b.png";
 import Footer from "../components/Footer";
 import PromoModal from "../components/PromoModal";
 import QuoteModal from "../components/QuoteModal";
@@ -70,6 +71,12 @@ function PhotoStripPreviewComponent() {
       name: "Lilo & Stitch",
       supportedLayouts: ["b"], // Only layout B is supported
       imagePath: liloStitchFrameB,
+    },
+    {
+      id: "christmas_party",
+      name: "Christmas Party",
+      supportedLayouts: ["b"], // Only layout B is supported
+      imagePath: xmasFrameB,
     },
   ];
 

@@ -35,6 +35,9 @@
 .webcam-container.layout-c {
   aspect-ratio: 540/713; /* Approximately 0.757:1 */
   max-width: 540px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* New style for the preview image container */
@@ -69,6 +72,15 @@
   object-fit: cover; /* This ensures the video covers the container while maintaining aspect ratio */
   object-position: center; /* Center the video in the container */
   border-radius: 8px;
+}
+
+/* Layout C specific - crop to portrait aspect ratio */
+/* The container's 540:713 aspect ratio defines the crop, object-fit: cover fills it */
+.webcam-container.layout-c .webcam-video {
+  object-fit: cover; /* Fill container, crop overflow - matches capture behavior */
+  object-position: center; /* Center crop */
+  width: 100%;
+  height: 100%;
 }
 
 .controls {
