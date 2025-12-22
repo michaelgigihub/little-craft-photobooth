@@ -31,12 +31,16 @@ function PhotoStripPreviewComponent() {
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [hasDownloaded, setHasDownloaded] = useState(false);
   
-  // Shared session state
-  const [isSharedSession, setIsSharedSession] = useState(false);
+  // Check for session parameter synchronously to prevent redirect
+  const urlParams = new URLSearchParams(window.location.search);
+  const sessionIdFromUrl = urlParams.get("session");
+  
+  // Shared session state - initialize based on URL parameter
+  const [isSharedSession, setIsSharedSession] = useState(!!sessionIdFromUrl);
   const [sharedPhotos, setSharedPhotos] = useState([]);
   const [sharedLayout, setSharedLayout] = useState(null);
   const [sharedPhotoCount, setSharedPhotoCount] = useState(0);
-  const [isLoadingShared, setIsLoadingShared] = useState(false);
+  const [isLoadingShared, setIsLoadingShared] = useState(!!sessionIdFromUrl); // Start loading if session param exists
   const [sharedError, setSharedError] = useState(null);
 
   // Determine which photos/layout to use (shared or local session)
@@ -146,16 +150,10 @@ function PhotoStripPreviewComponent() {
     navigate({ to: "/" });
   };
 
-  // Check for shared session URL parameter
+  // Fetch shared photos when session parameter is present
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const sessionId = urlParams.get("session");
-
-    if (sessionId) {
-      setIsSharedSession(true);
-      setIsLoadingShared(true);
-      
-      fetchPhotosFromSupabase(sessionId)
+    if (sessionIdFromUrl) {
+      fetchPhotosFromSupabase(sessionIdFromUrl)
         .then((result) => {
           if (result.success) {
             setSharedPhotos(result.photos);
@@ -172,7 +170,7 @@ function PhotoStripPreviewComponent() {
           setIsLoadingShared(false);
         });
     }
-  }, []);
+  }, [sessionIdFromUrl]);
 
   // Redirect to home if no session (local or shared) is active
   useEffect(() => {
