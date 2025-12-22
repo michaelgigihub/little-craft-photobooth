@@ -74,15 +74,15 @@ function PhotoStripPreviewComponent() {
   ];
 
   // Photo strip width based on layout
-  // Using 4x scale for print-quality output
+  // Using 2x scale for display (mobile-compatible) while maintaining quality
   const getStripWidth = () => {
     switch (layout) {
       case "a":
       case "b":
       case "d":
-        return 4800; // 4x scale of 1200px for high-quality prints
+        return 2400; // 2x scale of 1200px (mobile-compatible)
       case "c":
-        return 2400; // 4x scale of 600px for high-quality prints
+        return 1200; // 2x scale of 600px
       default:
         return 0;
     }
@@ -90,50 +90,50 @@ function PhotoStripPreviewComponent() {
 
   const stripWidth = getStripWidth();
 
-  // Gap between photos - scaled 4x for high-resolution output
+  // Gap between photos - scaled 2x for display
   const getPhotoGap = () => {
     switch (layout) {
       case "a":
-        return 120; // 4x of 30
+        return 60; // 2x of 30
       case "b":
-        return 480; // 4x of 120
+        return 240; // 2x of 120
       case "c":
       case "d":
-        return 160; // 4x of 40
+        return 80; // 2x of 40
       default:
         return 0;
     }
   };
   const photoGap = getPhotoGap();
 
-  // Adjust padding based on layout - scaled 4x for high-resolution output
+  // Adjust padding based on layout - scaled 2x for display
   let canvasPadding;
   switch (layout) {
     case "a":
-      canvasPadding = { top: 480, left: 268 }; // 4x of { top: 120, left: 67 }
+      canvasPadding = { top: 240, left: 134 }; // 2x of { top: 120, left: 67 }
       break;
     case "b":
-      canvasPadding = { top: 640, left: 240 }; // 4x of { top: 160, left: 60 }
+      canvasPadding = { top: 320, left: 120 }; // 2x of { top: 160, left: 60 }
       break;
     case "c":
-      canvasPadding = { top: 240, left: 120 }; // 4x of { top: 60, left: 30 }
+      canvasPadding = { top: 120, left: 60 }; // 2x of { top: 60, left: 30 }
       break;
     case "d":
-      canvasPadding = { top: 280, left: 388 }; // 4x of { top: 70, left: 97 }
+      canvasPadding = { top: 140, left: 194 }; // 2x of { top: 70, left: 97 }
       break;
     default:
       canvasPadding = { top: 0, left: 0 };
   }
 
-  // Calculate height - scaled 4x for high-resolution output
+  // Calculate height - scaled 2x for display (mobile-compatible)
   const getStripHeight = () => {
     switch (layout) {
       case "a": // 4 photos, 1 per row - standard 2:6 aspect ratio
       case "b": // 3 photos, 1 per row - standard 2:6 aspect ratio
-        return 14400; // 4x of 3600
+        return 7200; // 2x of 3600 (~17MP total, within mobile limits)
       case "c": // 2 photos, 1 per row - standard 4:6 aspect ratio
       case "d": // 2 photos, 1 per row - standard 2:6 aspect ratio
-        return 7200; // 4x of 1800
+        return 3600; // 2x of 1800
       default:
         return stripWidth * 3; // Default to 2:6 ratio
     }

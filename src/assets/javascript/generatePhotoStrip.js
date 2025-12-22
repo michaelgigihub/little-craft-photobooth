@@ -75,11 +75,11 @@ export const generatePhotoStrip = async ({
         photoWidth = stripWidth - canvasPadding.left * 2;
         photoHeight = (3 / 4) * photoWidth; // 4:3 aspect ratio
         break;
-      case "c": // 2 photos, 540:713 ratio - scaled 4x
+      case "c": // 2 photos, 540:713 ratio - scaled 2x
         cols = 1;
         rows = 2;
-        photoWidth = 2160; // 4x of 540
-        photoHeight = 2852; // 4x of 713
+        photoWidth = 1080; // 2x of 540
+        photoHeight = 1426; // 2x of 713
         break;
       case "d": // 2 photos, 4:6 ratio
         cols = 1;
@@ -142,17 +142,17 @@ export const generatePhotoStrip = async ({
     const rootStyles = getComputedStyle(document.documentElement);
     const bodyFont = rootStyles.getPropertyValue("--font-family-body").trim();
 
-    // Set watermark font size based on layout - scaled 4x for high-resolution output
+    // Set watermark font size based on layout - scaled 2x for display
     switch (layout) {
       case "a": // 4 strips (2:6)
       case "d": // 2 strips (4:6)
       case "b": // 3 strips (2:6)
-        ctx.font = `240px ${bodyFont}`; // 4x of 60px
-        ctx.bottomPadding = 280; // 4x of 70
+        ctx.font = `120px ${bodyFont}`; // 2x of 60px
+        ctx.bottomPadding = 140; // 2x of 70
         break;
       case "c": // 2 strips (2:6)
-        ctx.font = `140px ${bodyFont}`; // 4x of 35px
-        ctx.bottomPadding = 180; // 4x of 45
+        ctx.font = `70px ${bodyFont}`; // 2x of 35px
+        ctx.bottomPadding = 90; // 2x of 45
         break;
       default:
         ctx.font = `0px ${bodyFont}`;
