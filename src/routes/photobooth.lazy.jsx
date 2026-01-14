@@ -1,10 +1,13 @@
 import { createLazyFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useRef, useCallback, useEffect } from "react";
 import Webcam from "react-webcam";
-import { SwitchCamera, Sparkles } from "lucide-react";
+import { SwitchCamera } from "lucide-react";
 import { usePhotoContext } from "../context/PhotoContext";
 import { useBeautyFilter } from "../hooks/useBeautyFilter";
 import "../assets/css/photobooth.lazy.css";
+import { useGSAP } from "@gsap/react";
+import { Flip } from "gsap/all";
+import { useMediaQuery } from "react-responsive";
 
 export const Route = createLazyFileRoute("/photobooth")({
   component: PhotoboothComponent,
@@ -44,11 +47,17 @@ function PhotoboothComponent() {
   const [tempUploadedFile, setTempUploadedFile] = useState(null);
   const [cropFrameStyle, setCropFrameStyle] = useState({});
   const [isFlashing, setIsFlashing] = useState(false);
-  const [beautyEnabled, setBeautyEnabled] = useState(true);
-  const [beautyIntensity, setBeautyIntensity] = useState(0.5);
+
+  // Beauty intensity constant (0.5 is default)
+  const beautyIntensity = 0.5;
   const webcamRef = useRef(null);
   const cropCanvasRef = useRef(null);
   const previewImageRef = useRef(null);
+  
+  // Fullscreen animation state
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const webcamContainerRef = useRef(null);
+  const flipState = useRef(null);
 
   // Beauty filter hook
   const {
@@ -56,30 +65,60 @@ function PhotoboothComponent() {
     isLoading: beautyLoading,
     initialize: initializeBeauty,
     applyBeautyFilterToImage,
+    applyBeautyFilterToCanvas,
+    warmUp,
   } = useBeautyFilter();
 
-  // Initialize beauty filter when enabled
+  // Initialize beauty filter (always enabled)
   useEffect(() => {
-    if (beautyEnabled && !beautyInitialized && !beautyLoading) {
+    if (!beautyInitialized && !beautyLoading) {
       initializeBeauty();
     }
-  }, [beautyEnabled, beautyInitialized, beautyLoading, initializeBeauty]);
+  }, [beautyInitialized, beautyLoading, initializeBeauty]);
+
+  // Warm up beauty filter when webcam and filter are ready
+  useEffect(() => {
+    if (beautyInitialized && webcamRef.current) {
+      // Run a single inference to warm up the model
+      // We use a small delay to ensure video is actually playing and has dimensions
+      const timer = setTimeout(() => {
+        const video = webcamRef.current?.video;
+        if (
+          video &&
+          video.readyState >= 2 &&
+          video.videoWidth > 0 &&
+          video.videoHeight > 0
+        ) {
+          warmUp(video);
+        }
+      }, 1500); // Slightly longer delay to be safe
+      return () => clearTimeout(timer);
+    }
+  }, [beautyInitialized, warmUp, webcamReady]);
 
   // Debug log
-  console.log("Current state:", {
+  /*  console.log("Current state:", {
     layout,
     photoCount,
     capturedPhotos: photoSession.photos.length,
     capturing,
-  }); // Detect if we're on a mobile device
-  const isMobile =
+  /*  console.log("Current state:", {
+    layout,
+    photoCount,
+    capturedPhotos: photoSession.photos.length,
+    capturing,
+  }); */ // Detect if we're on a mobile device
+  const isMobileDevice =
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
       navigator.userAgent
     );
+
+  const isSmallScreen = useMediaQuery({ maxWidth: 767 });
+
   // Set up webcam constraints for maximum quality
   // Request highest resolution possible, cropping will be done at capture time
   const getVideoConstraints = () => {
-    if (isMobile) {
+    if (isMobileDevice) {
       return {
         width: { ideal: 1920, min: 640 },
         height: { ideal: 1080, min: 480 },
@@ -112,7 +151,7 @@ function PhotoboothComponent() {
   // Front camera (user) should be mirrored for natural selfie experience
   // Rear camera (environment) should NOT be mirrored, especially on mobile
   const shouldFlipVideo = () => {
-    if (isMobile && facingMode === "environment") {
+    if (isMobileDevice && facingMode === "environment") {
       return false; // Don't flip rear camera on mobile
     }
     return true; // Flip front camera and all cameras on desktop
@@ -295,10 +334,10 @@ function PhotoboothComponent() {
       // Draw the cropped video frame to match what's shown in the preview
       // Determine flip logic at capture time based on current camera state
       const shouldFlip =
-        isMobile && facingMode === "environment" ? false : true;
+        isMobileDevice && facingMode === "environment" ? false : true;
 
       console.log("Capture flip logic:", {
-        isMobile,
+        isMobile: isMobileDevice,
         facingMode,
         shouldFlip,
       });
@@ -334,17 +373,30 @@ function PhotoboothComponent() {
       // Convert to high-quality JPEG
       const imageSrc = canvas.toDataURL("image/jpeg", 1.0);
 
-      // Apply beauty filter if enabled
-      if (beautyEnabled && beautyInitialized) {
-        applyBeautyFilterToImage(imageSrc, { intensity: beautyIntensity })
-          .then((filteredSrc) => {
+      // Apply beauty filter (always enabled if initialized)
+      if (beautyInitialized) {
+        // Use the optimized canvas method that uses existing video landmarks
+        // This avoids the expensive context switch and base64 processing
+        const cropInfo = {
+          sourceX,
+          sourceY,
+          sourceWidth,
+          sourceHeight,
+        };
+
+        applyBeautyFilterToCanvas(canvas, video, cropInfo, {
+          intensity: beautyIntensity,
+        })
+          .then(() => {
+            // After modification, get the data URL from canvas
+            const filteredSrc = canvas.toDataURL("image/jpeg", 1.0);
             addPhoto(filteredSrc);
             console.log(
-              `Captured photo ${photoSession.photos.length + 1} of ${photoCount} with beauty filter - Size: ${targetWidth}x${targetHeight}`
+              `Captured photo ${photoSession.photos.length + 1} of ${photoCount} with beauty filter (optimized) - Size: ${targetWidth}x${targetHeight}`
             );
           })
-          .catch(() => {
-            // Fallback to original if filter fails
+          .catch((err) => {
+            console.error("Optimized beauty filter failed, falling back:", err);
             addPhoto(imageSrc);
           });
       } else {
@@ -359,14 +411,15 @@ function PhotoboothComponent() {
     addPhoto,
     photoSession.photos.length,
     photoCount,
-    isMobile,
+    isMobileDevice,
     facingMode,
     layout,
     setIsFlashing,
-    beautyEnabled,
+
     beautyInitialized,
     beautyIntensity,
     applyBeautyFilterToImage,
+    applyBeautyFilterToCanvas,
   ]);
   // Function to handle single countdown and photo capture
   const handleCountdown = useCallback(() => {
@@ -396,7 +449,23 @@ function PhotoboothComponent() {
       clearPhotos(); // Reset if we already have photos
     }
 
+    // 1. Capture current state for Flip
+    // Only animate on desktop (not small screens)
+    if (!isSmallScreen && webcamContainerRef.current) {
+        flipState.current = Flip.getState(webcamContainerRef.current);
+    }
+    
     setCapturing(true);
+    
+    // Only switch to fullscreen layout on desktop (not small screens)
+    if (!isSmallScreen) {
+        setIsFullscreen(true); 
+        // Wait for the animation (approx 800ms) before starting countdown logic
+        await new Promise(resolve => setTimeout(resolve, 800));
+    } else {
+        // Short delay for mobile to ensure state settles
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
 
     try {
       // First photo
@@ -413,9 +482,28 @@ function PhotoboothComponent() {
       }
     } finally {
       setCapturing(false);
+      setIsFullscreen(false); // Exit fullscreen after session (or handle in reset/redirect)
       setCountdown(null);
     }
   }, [handleCountdown, photoCount, photoSession.photos.length, clearPhotos]);
+
+  // Handle Flip Animation
+  useGSAP(() => {
+    if (flipState.current && webcamContainerRef.current) {
+        Flip.from(flipState.current, {
+            targets: webcamContainerRef.current,
+            duration: 0.8,
+            ease: "power2.inOut",
+            absolute: true, // Crucial for smooth position/size changes
+            zIndex: 1000,   // Ensure it's on top
+            onComplete: () => {
+               // Optional: clear explicit inline styles if needed, 
+               // but Flip usually handles this well.
+            }
+        });
+        flipState.current = null; // Reset state
+    }
+  }, { dependencies: [isFullscreen] });
 
   // Redirect to photo-strip-preview when all photos are captured
   useEffect(() => {
@@ -430,6 +518,7 @@ function PhotoboothComponent() {
   const resetCaptures = () => {
     clearPhotos();
     setCapturing(false);
+    setIsFullscreen(false);
     setCountdown(null);
     setShowCropPreview(false);
     setTempUploadedFile(null);
@@ -671,7 +760,8 @@ function PhotoboothComponent() {
                 </div>
               )}{" "}
               <div
-                className={`webcam-container ${layout === "c" ? "layout-c" : ""} ${isFlashing ? "flash" : ""}`}
+                ref={webcamContainerRef}
+                className={`webcam-container ${layout === "c" ? "layout-c" : ""} ${isFlashing ? "flash" : ""} ${isFullscreen ? "fullscreen" : ""}`}
               >
                 <Webcam
                   audio={false}
@@ -707,23 +797,6 @@ function PhotoboothComponent() {
                   }
                 >
                   <SwitchCamera size={24} />
-                </button>
-
-                {/* Beauty mode toggle button */}
-                <button
-                  className={`beauty-toggle-btn ${beautyEnabled ? "active" : ""} ${beautyLoading ? "loading" : ""}`}
-                  onClick={() => setBeautyEnabled(!beautyEnabled)}
-                  disabled={capturing}
-                  title={
-                    beautyLoading
-                      ? "Loading beauty filter..."
-                      : beautyEnabled
-                        ? "Disable beauty mode"
-                        : "Enable beauty mode (smooth skin)"
-                  }
-                >
-                  <Sparkles size={20} />
-                  {beautyLoading && <span className="beauty-loading-spinner" />}
                 </button>
               </div>
             </>
@@ -857,9 +930,11 @@ function PhotoboothComponent() {
                 {photoSession.photos.length === 0
                   ? !webcamReady
                     ? "Preparing camera..."
-                    : webcamError
-                      ? "Camera unavailable"
-                      : "Start Taking Photos"
+                    : !beautyInitialized
+                      ? "Initializing beauty filter..."
+                      : webcamError
+                        ? "Camera unavailable"
+                        : "Start Taking Photos"
                   : capturing
                     ? `Capturing in progress...`
                     : `Continue Photo Session (${photoSession.photos.length}/${photoCount} taken)`}

@@ -4,13 +4,15 @@ import "./index.css";
 import App from "./App.jsx";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
-
+import { BeautyFilterProvider } from "./context/BeautyFilterContext";
 
 const router = createRouter({ routeTree });
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <RouterProvider router={router} />
-    <App />
+    <BeautyFilterProvider>
+      <RouterProvider router={router} />
+      <App />
+    </BeautyFilterProvider>
   </StrictMode>
 );

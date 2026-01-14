@@ -37,7 +37,7 @@ function PhotoStripPreviewComponent() {
   const sessionIdFromUrl = urlParams.get("session");
   
   // Shared session state - initialize based on URL parameter
-  const [isSharedSession, setIsSharedSession] = useState(!!sessionIdFromUrl);
+  const isSharedSession = !!sessionIdFromUrl;
   const [sharedPhotos, setSharedPhotos] = useState([]);
   const [sharedLayout, setSharedLayout] = useState(null);
   const [sharedPhotoCount, setSharedPhotoCount] = useState(0);
