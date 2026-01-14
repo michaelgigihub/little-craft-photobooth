@@ -3,8 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { usePhotoContext } from "../context/PhotoContext";
 import "../assets/css/photo-strip-preview.lazy.css";
 import "../assets/css/footer.css";
-import liloStitchFrameB from "../assets/images/frames/lilo_stitch_frames/lilo_stitch_frame_b.png";
-import xmasFrameB from "../assets/images/frames/xmas_party_frames/xmas_frame_b.png";
+//import liloStitchFrameB from "../assets/images/frames/lilo_stitch_frames/lilo_stitch_frame_b.png";
+//import xmasFrameB from "../assets/images/frames/xmas_party_frames/xmas_frame_b.png";
 import Footer from "../components/Footer";
 import PromoModal from "../components/PromoModal";
 import QuoteModal from "../components/QuoteModal";
@@ -12,6 +12,7 @@ import { downloadAsJPEG } from "../assets/javascript/downloadJpeg.js";
 import { downloadAsGIF } from "../assets/javascript/downloadGif.js";
 import { downloadIndividualImages } from "../assets/javascript/downloadIndividualImages.js";
 import { generatePhotoStrip } from "../assets/javascript/generatePhotoStrip.js";
+import { frameOptions, colorOptions } from "../constants";
 
 export const Route = createLazyFileRoute("/photo-strip-preview")({
   component: PhotoStripPreviewComponent,
@@ -29,40 +30,9 @@ function PhotoStripPreviewComponent() {
   const [pendingDownloadType, setPendingDownloadType] = useState(null); // 'jpeg' or 'gif'
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [hasDownloaded, setHasDownloaded] = useState(false);
-  
+
   // Determine which photos/layout to use (shared or local session)
   const { photos, layout, photoCount } = photoSession;
-
-  // Pastel color palette options
-  const colorOptions = [
-    { color: "#ffffff", name: "White" },
-    { color: "#FFB6C1", name: "Pastel Pink" },
-    { color: "#ADD8E6", name: "Pastel Blue" },
-    { color: "#BDFCC9", name: "Pastel Green" },
-    { color: "#FFDAB9", name: "Peach" },
-    { color: "#E6E6FA", name: "Lavender" },
-  ];
-  // Frame overlay options
-  const frameOptions = [
-    {
-      id: null,
-      name: "No Frame",
-      supportedLayouts: ["a", "b", "c", "d"],
-      imagePath: null,
-    },
-    {
-      id: "lilo_stitch",
-      name: "Lilo & Stitch",
-      supportedLayouts: ["b"], // Only layout B is supported
-      imagePath: liloStitchFrameB,
-    },
-    {
-      id: "christmas_party",
-      name: "Christmas Party",
-      supportedLayouts: ["b"], // Only layout B is supported
-      imagePath: xmasFrameB,
-    },
-  ];
 
   // Photo strip width based on layout
   // Using 2x scale for display (mobile-compatible) while maintaining quality
@@ -141,11 +111,13 @@ function PhotoStripPreviewComponent() {
     navigate({ to: "/" });
   };
 
-
-
   // Redirect to home if no session is active
   useEffect(() => {
-    if (!hasActiveSession() || !photoSession.photos || photoSession.photos.length === 0) {
+    if (
+      !hasActiveSession() ||
+      !photoSession.photos ||
+      photoSession.photos.length === 0
+    ) {
       navigate({ to: "/" });
     }
   }, [hasActiveSession, photoSession.photos, navigate]);
@@ -172,7 +144,7 @@ function PhotoStripPreviewComponent() {
       setStripGenerated,
     });
   }; // Early return check - must be AFTER all hooks have been called
-  
+
   // For local sessions without photos
   if (!hasActiveSession() || !photos || photos.length === 0) {
     return (
@@ -368,7 +340,6 @@ function PhotoStripPreviewComponent() {
               Download Photos
             </button>
           </div>
-          
         </div>
       )}{" "}
       <div className="navigation-controls">
