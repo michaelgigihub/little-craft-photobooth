@@ -85,7 +85,7 @@ const QuoteModal = ({
             <>
               <p>
                 Now let's get you connected with{" "}
-                <span className="promo-highlight">Little Craft</span> for
+                <span className="promo-highlight">Little Crafts</span> for
                 printing services.
               </p>
               <p>Click the button below to message us on Facebook</p>

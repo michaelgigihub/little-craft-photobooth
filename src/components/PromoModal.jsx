@@ -6,7 +6,7 @@ const features = [
   "Vibrant colors that pop",
   "Perfect keepsake for events & memories",
   "Fast, affordable local printing",
-]; 
+];
 const PromoModal = ({
   isOpen,
   onClose,
@@ -41,7 +41,7 @@ const PromoModal = ({
           title: "Welcome!",
           subtitle: "Love your first photo strip?",
           message:
-            "Your photo strip looks amazing! Why not bring it to life with a professional print from Little Craft?",
+            "Your photo strip looks amazing! Why not bring it to life with a professional print from Little Crafts?",
           features,
         };
       case 5:
@@ -49,7 +49,7 @@ const PromoModal = ({
           title: "You're back!",
           subtitle: "Loving the photo booth experience?",
           message:
-            "We've noticed you're creating lots of memories! Consider getting your favorite photos professionally printed with Little Craft.",
+            "We've noticed you're creating lots of memories! Consider getting your favorite photos professionally printed with Little Crafts.",
           features,
         };
       case 15:
@@ -65,7 +65,7 @@ const PromoModal = ({
           title: "Wait!",
           subtitle: "Want a physical copy of your memories?",
           message:
-            "Your photo strip looks amazing! Why not bring it to life with a professional print from Little Craft?",
+            "Your photo strip looks amazing! Why not bring it to life with a professional print from Little Crafts?",
           features: [
             "High-quality photo paper that lasts",
             "Vibrant colors that pop",
@@ -118,11 +118,11 @@ const PromoModal = ({
         </div>
         <div className="promo-modal-body">
           <p>
-            {content.message.includes("Little Craft") ? (
+            {content.message.includes("Little Crafts") ? (
               <>
-                {content.message.split("Little Craft")[0]}
-                <span className="promo-highlight">Little Craft</span>
-                {content.message.split("Little Craft")[1]}
+                {content.message.split("Little Crafts")[0]}
+                <span className="promo-highlight">Little Crafts</span>
+                {content.message.split("Little Crafts")[1]}
               </>
             ) : (
               content.message
@@ -142,7 +142,7 @@ const PromoModal = ({
         </div>{" "}
         <div className="promo-modal-actions">
           <button className="promo-btn promo-btn-primary" onClick={onGetQuote}>
-            Print with Little Craft
+            Print with Little Crafts
           </button>
 
           <button

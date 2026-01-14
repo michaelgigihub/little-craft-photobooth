@@ -1,10 +1,10 @@
 {
-  "name": "Little Craft Photobooth",
+  "name": "Little Crafts Photobooth",
   "short_name": "LC Photobooth",
-  "description": "Interactive photobooth by Little Craft - Create and print beautiful photo memories",
+  "description": "Interactive photobooth by Little Crafts - Create and print beautiful photo memories",
   "start_url": "/",
   "display": "standalone",
-"background_color": "#FEF6E8",
+  "background_color": "#FEF6E8",
   "theme_color": "#FEF6E8",
   "orientation": "portrait-primary",
   "icons": [
