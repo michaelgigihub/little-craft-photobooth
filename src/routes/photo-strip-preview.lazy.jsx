@@ -8,12 +8,10 @@ import xmasFrameB from "../assets/images/frames/xmas_party_frames/xmas_frame_b.p
 import Footer from "../components/Footer";
 import PromoModal from "../components/PromoModal";
 import QuoteModal from "../components/QuoteModal";
-import QRCodeShare from "../components/QRCodeShare";
 import { downloadAsJPEG } from "../assets/javascript/downloadJpeg.js";
 import { downloadAsGIF } from "../assets/javascript/downloadGif.js";
 import { downloadIndividualImages } from "../assets/javascript/downloadIndividualImages.js";
 import { generatePhotoStrip } from "../assets/javascript/generatePhotoStrip.js";
-import { fetchPhotosFromSupabase } from "../assets/javascript/photoSharingService.js";
 
 export const Route = createLazyFileRoute("/photo-strip-preview")({
   component: PhotoStripPreviewComponent,
@@ -32,22 +30,8 @@ function PhotoStripPreviewComponent() {
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [hasDownloaded, setHasDownloaded] = useState(false);
   
-  // Check for session parameter synchronously to prevent redirect
-  const urlParams = new URLSearchParams(window.location.search);
-  const sessionIdFromUrl = urlParams.get("session");
-  
-  // Shared session state - initialize based on URL parameter
-  const isSharedSession = !!sessionIdFromUrl;
-  const [sharedPhotos, setSharedPhotos] = useState([]);
-  const [sharedLayout, setSharedLayout] = useState(null);
-  const [sharedPhotoCount, setSharedPhotoCount] = useState(0);
-  const [isLoadingShared, setIsLoadingShared] = useState(!!sessionIdFromUrl); // Start loading if session param exists
-  const [sharedError, setSharedError] = useState(null);
-
   // Determine which photos/layout to use (shared or local session)
-  const photos = isSharedSession ? sharedPhotos : photoSession.photos;
-  const layout = isSharedSession ? sharedLayout : photoSession.layout;
-  const photoCount = isSharedSession ? sharedPhotoCount : photoSession.photoCount;
+  const { photos, layout, photoCount } = photoSession;
 
   // Pastel color palette options
   const colorOptions = [
@@ -157,49 +141,14 @@ function PhotoStripPreviewComponent() {
     navigate({ to: "/" });
   };
 
-  // Fetch shared photos when session parameter is present
-  useEffect(() => {
-    if (sessionIdFromUrl) {
-      fetchPhotosFromSupabase(sessionIdFromUrl)
-        .then((result) => {
-          if (result.success) {
-            setSharedPhotos(result.photos);
-            setSharedLayout(result.layout);
-            setSharedPhotoCount(result.photoCount);
-          } else {
-            setSharedError(result.error || "Failed to load shared photos");
-          }
-        })
-        .catch((err) => {
-          setSharedError(err.message || "An error occurred");
-        })
-        .finally(() => {
-          setIsLoadingShared(false);
-        });
-    }
-  }, [sessionIdFromUrl]);
 
-  // Redirect to home if no session (local or shared) is active
+
+  // Redirect to home if no session is active
   useEffect(() => {
-    // Don't redirect while loading shared session
-    if (isLoadingShared) return;
-    
-    // For shared sessions, check if we have shared photos
-    if (isSharedSession) {
-      if (sharedError || (!isLoadingShared && sharedPhotos.length === 0)) {
-        // Only redirect if there's an error or no photos after loading
-        if (sharedError) {
-          navigate({ to: "/" });
-        }
-      }
-      return;
-    }
-    
-    // For local sessions, use the original logic
     if (!hasActiveSession() || !photoSession.photos || photoSession.photos.length === 0) {
       navigate({ to: "/" });
     }
-  }, [hasActiveSession, photoSession.photos, navigate, isSharedSession, sharedPhotos, isLoadingShared, sharedError]);
+  }, [hasActiveSession, photoSession.photos, navigate]);
 
   // Generate the photo strip when component mounts or frame color changes
   useEffect(() => {
@@ -224,33 +173,8 @@ function PhotoStripPreviewComponent() {
     });
   }; // Early return check - must be AFTER all hooks have been called
   
-  // Show loading state for shared sessions
-  if (isLoadingShared) {
-    return (
-      <div className="photo-strip-container page-container">
-        <h2>Loading Shared Photos...</h2>
-        <p>Please wait while we fetch your photos.</p>
-        <Footer />
-      </div>
-    );
-  }
-
-  // Show error state for shared sessions
-  if (isSharedSession && sharedError) {
-    return (
-      <div className="photo-strip-container page-container">
-        <h2>Unable to Load Photos</h2>
-        <p>{sharedError}</p>
-        <button onClick={() => navigate({ to: "/" })} className="action-btn primary">
-          Go to Home
-        </button>
-        <Footer />
-      </div>
-    );
-  }
-
   // For local sessions without photos
-  if (!isSharedSession && (!hasActiveSession() || !photos || photos.length === 0)) {
+  if (!hasActiveSession() || !photos || photos.length === 0) {
     return (
       <div className="photo-strip-container page-container">
         <h2>Redirecting...</h2>
@@ -445,10 +369,6 @@ function PhotoStripPreviewComponent() {
             </button>
           </div>
           
-          {/* QR Code Share - only show for local sessions */}
-          {!isSharedSession && (
-            <QRCodeShare photos={photos} layout={layout} />
-          )}
         </div>
       )}{" "}
       <div className="navigation-controls">
