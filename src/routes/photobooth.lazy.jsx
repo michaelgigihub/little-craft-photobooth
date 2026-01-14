@@ -8,6 +8,8 @@ import "../assets/css/photobooth.lazy.css";
 import { useGSAP } from "@gsap/react";
 import { Flip } from "gsap/all";
 import { useMediaQuery } from "react-responsive";
+import countSoundAsset from "../assets/audio/count_sound.mp3";
+import captureSoundAsset from "../assets/audio/capture_sound.mp3";
 
 export const Route = createLazyFileRoute("/photobooth")({
   component: PhotoboothComponent,
@@ -261,6 +263,10 @@ function PhotoboothComponent() {
   }, [hasRearCamera, countdown, facingMode, capturing]); // Function to capture a photo with maximum quality and proper aspect ratio cropping
   const capturePhoto = useCallback(() => {
     if (webcamRef.current) {
+      // Play capture sound
+      const audio = new Audio(captureSoundAsset);
+      audio.play().catch((e) => console.error("Error playing capture sound:", e));
+
       // Trigger flash effect
       setIsFlashing(true);
       setTimeout(() => setIsFlashing(false), 500); // Flash duration
@@ -425,6 +431,10 @@ function PhotoboothComponent() {
   const handleCountdown = useCallback(() => {
     return new Promise((resolve) => {
       setCountdown(countdownTime);
+      
+      // Play sound for initial number
+      const audio = new Audio(countSoundAsset);
+      audio.play().catch((e) => console.error("Error playing count sound:", e));
 
       let count = countdownTime;
       const timer = setInterval(() => {
@@ -438,6 +448,9 @@ function PhotoboothComponent() {
           setTimeout(resolve, 600); // Short delay after capture
         } else {
           setCountdown(count);
+          // Play sound for remaining numbers
+          const audio = new Audio(countSoundAsset);
+          audio.play().catch((e) => console.error("Error playing count sound:", e));
         }
       }, 1000);
     });
