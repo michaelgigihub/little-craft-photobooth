@@ -119,17 +119,17 @@
 }
 
 .action-btn.primary {
-  background-color: #2196f3;
+  background-color: var(--color-secondary);
   color: white;
 }
 
 .action-btn.primary:hover {
-  background-color: #0b7dda;
+  background-color: var(--color-primary);
   transform: translateY(-2px);
 }
 
 .action-btn.download {
-  background-color: #4caf50;
+  background-color: var(--color-green);
   color: white;
 }
 
@@ -288,13 +288,13 @@
 }
 
 .frame-option:hover:not(.disabled) {
-  border-color: #2196f3;
+  border-color: var(--color-selected);
   transform: translateY(-1px);
 }
 
 .frame-option.selected {
-  border-color: #2196f3;
-  background-color: #2196f3;
+  border-color: var(--color-selected);
+  background-color: var(--color-selected);
   color: white;
 }
 

@@ -938,7 +938,7 @@ function PhotoboothComponent() {
               <button
                 className="capture-btn"
                 onClick={startCapturing}
-                disabled={capturing || !webcamReady || !!webcamError}
+                disabled={capturing || !webcamReady || !!webcamError || !beautyInitialized}
               >
                 {photoSession.photos.length === 0
                   ? !webcamReady

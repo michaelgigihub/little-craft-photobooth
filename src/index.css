@@ -6,10 +6,13 @@
 }
 
 :root {
-  --color-primary: #2E3F59;
-  --color-background-color: #FEF6E8;
+  --color-primary: #2e3f59;
+  --color-secondary: #415a77;
+  --color-selected: #7bb2d9;
+  --color-background-color: #fef6e8;
   --color-text-on-primary-black: #2e3f59;
-  --color-text-on-primary-white: #FFFFFF;
+  --color-text-on-primary-white: #ffffff;
+  --color-green: #85b654;
 
   --font-family-primary: "Vintage Goods", serif;
   --font-family-body: "Ovo", sans-serif;
@@ -60,8 +63,8 @@ h6 {
   font-family: var(--font-family-primary);
 }
 
-h2{
-  font-size: var(--title-font-size)
+h2 {
+  font-size: var(--title-font-size);
 }
 
 @media (max-width: 768px) {
