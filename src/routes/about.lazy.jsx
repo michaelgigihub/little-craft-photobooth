@@ -1,9 +1,5 @@
 import { createLazyFileRoute, Link } from "@tanstack/react-router";
-import { useRef, useState } from "react";
-import gsap from "gsap";
-import { useGSAP } from "@gsap/react";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { TextPlugin } from "gsap/TextPlugin";
+import { useEffect, useRef, useState } from "react";
 import Footer from "../components/Footer";
 import {
   Building2,
@@ -30,14 +26,13 @@ import galleryImg4 from "../assets/images/about-us-photos/504094795_115402657007
 import galleryImg5 from "../assets/images/about-us-photos/505392339_1158698766270747_7954774798331590940_n.jpg";
 import galleryImg6 from "../assets/images/about-us-photos/506227741_1160773712729919_3936589412809733155_n.jpg";
 
-gsap.registerPlugin(useGSAP, ScrollTrigger, TextPlugin);
-
 export const Route = createLazyFileRoute("/about")({
   component: About,
 });
 
 function About() {
-  const container = useRef(null);
+  // Create refs for sections we want to observe
+  const sectionRefs = useRef([]);
   const [activeSection, setActiveSection] = useState("about");
 
   // Navigation items configuration
@@ -49,123 +44,135 @@ function About() {
     { id: "footer", label: "Contact" },
   ];
 
-  useGSAP(() => {
-    // 1. Navigation Active State & Section Fade-ins
-    const sections = gsap.utils.toArray(".gsap-fade-in");
-    
+  useEffect(() => {
+    // Set up intersection observer for animations
+    const animationOptions = {
+      root: null, // viewport
+      rootMargin: "80px 0px 80px 0px", // trigger when element is 100px away from entering viewport (very early)
+      threshold: 0.22, // trigger as soon as any part of the element is visible
+    };
+
+    const animationObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          // Add the visible class when element comes into view
+          entry.target.classList.add("is-visible");
+          // Once the animation has played, unobserve the element
+          animationObserver.unobserve(entry.target);
+        }
+      });
+    }, animationOptions);
+
+    // Set up intersection observer for navigation tracking (separate observer)
+    const navOptions = {
+      root: null,
+      rootMargin: "0px 0px -50% 0px", // Trigger when section is at least 50% in viewport
+      threshold: 0.1, // Lower threshold for better detection
+    };
+
+    const navObserver = new IntersectionObserver((entries) => {
+      // Create a map of all currently intersecting sections
+      const intersectingSections = new Map();
+
+      entries.forEach((entry) => {
+        const sectionId = entry.target.getAttribute("data-section");
+        if (entry.isIntersecting && sectionId) {
+          intersectingSections.set(sectionId, {
+            ratio: entry.intersectionRatio,
+            element: entry.target,
+          });
+        }
+      });
+
+      // If we have intersecting sections, find the most visible one
+      if (intersectingSections.size > 0) {
+        let mostVisibleSection = null;
+        let highestRatio = 0;
+
+        intersectingSections.forEach((data, sectionId) => {
+          if (data.ratio > highestRatio) {
+            highestRatio = data.ratio;
+            mostVisibleSection = sectionId;
+          }
+        });
+
+        if (mostVisibleSection) {
+          setActiveSection(mostVisibleSection);
+        }
+      }
+    }, navOptions);
+
+    // Get all sections with the fade-in-section class and observe them
+    const sections = document.querySelectorAll(".fade-in-section");
     sections.forEach((section) => {
-      const sectionId = section.getAttribute("data-section");
-      
-      // Separate ScrollTrigger exclusively for robust scroll-spy navigation
-      if (sectionId) {
-        ScrollTrigger.create({
-          trigger: section,
-          start: sectionId === "footer" ? "top 95%" : "top 75%",
-          end: sectionId === "footer" ? "bottom 0%" : "bottom 75%",
-          onToggle: (self) => {
-            if (self.isActive) setActiveSection(sectionId);
+      animationObserver.observe(section);
+      navObserver.observe(section); // Observe with both observers
+      sectionRefs.current.push(section);
+    }); // Set up intersection observer for gallery items on mobile
+    const isMobile = window.innerWidth <= 768;
+    let galleryObserver = null;
+    let galleryImages = [];
+
+    if (isMobile) {
+      const galleryOptions = {
+        root: null,
+        rootMargin: "-20% 0px -20% 0px", // trigger
+        threshold: 0.5,
+      };
+
+      galleryObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          const galleryItem = entry.target.closest(".gallery-item");
+          if (entry.isIntersecting) {
+            galleryItem?.classList.add("mobile-centered");
+          } else {
+            galleryItem?.classList.remove("mobile-centered");
+          }
+        });
+      }, galleryOptions);
+
+      // Observe all gallery images
+      galleryImages = document.querySelectorAll(".gallery-item img");
+      galleryImages.forEach((img) => {
+        galleryObserver.observe(img);
+      });
+    } // Clean up
+    return () => {
+      if (sectionRefs.current.length > 0) {
+        sectionRefs.current.forEach((section) => {
+          if (section) {
+            animationObserver.unobserve(section);
+            navObserver.unobserve(section);
           }
         });
       }
 
-      // Setup timeline for each section animation
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: section,
-          start: sectionId === "footer" ? "top 95%" : "top 80%", // trigger when top of section hits 80% down the viewport (95% for footer)
-        }
-      });
-
-      // Different animation for CTA section
-      if (section.classList.contains('cta-section')) {
-        tl.from(section, {
-          y: 30,
-          scale: 0.98,
-          opacity: 0,
-          duration: 0.7,
-          ease: "power2.out"
+      // Clean up gallery observer
+      if (galleryObserver && galleryImages.length > 0) {
+        galleryImages.forEach((img) => {
+          galleryObserver.unobserve(img);
         });
-      } else {
-        // Regular section fade-in
-        tl.from(section, {
-          y: 30,
-          opacity: 0,
-          duration: 0.7,
-          ease: "power2.out"
-        });
-        
-        // Stagger title and content
-        const title = section.querySelector('.section-title');
-        const content = section.querySelector('.section-content, .history-content');
-        
-        if (title && content) {
-          tl.from([title, content], {
-            y: 15,
-            opacity: 0,
-            duration: 0.6,
-            stagger: 0.2,
-            ease: "power2.out"
-          }, "-=0.4");
-        }
       }
-    });
-
-    // 2. Mobile Gallery Hover effect
-    const galleryItems = gsap.utils.toArray(".gallery-item");
-    galleryItems.forEach((item) => {
-      ScrollTrigger.create({
-        trigger: item,
-        start: "top 60%",
-        end: "bottom 40%",
-        toggleClass: "mobile-centered"
-      });
-    });
-
-    // 3. Typewriter text
-    gsap.to(".typewriter-text", {
-      text: "Little Crafts by WRT",
-      duration: 1.5,
-      ease: "none",
-      delay: 0.2,
-      onComplete: () => {
-        const cursor = gsap.utils.toArray(".cursor")[0];
-        if (cursor) cursor.classList.add("finished");
-      }
-    });
-
-    // 4. Cursor blink
-    gsap.to(".cursor", {
-      opacity: 0,
-      ease: "power2.inOut",
-      repeat: -1,
-      yoyo: true,
-      duration: 0.4
-    });
-
-  }, { scope: container });
+    };
+  }, []); // Run once on mount
 
   // Function to scroll to a specific section
   const scrollToSection = (sectionId) => {
     // Immediately update the active section for instant feedback
     setActiveSection(sectionId);
 
-    if (sectionId === "about") {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
-    }
-
     const element = document.querySelector(`[data-section="${sectionId}"]`);
     if (element) {
       element.scrollIntoView({
         behavior: "smooth",
-        block: "center",
+        block: "start",
         inline: "nearest",
       });
     }
   };
 
   return (
-    <div className="page-container" ref={container}>
+    <div className="page-container">
       {/* Vertical Navigation */}
       <nav className="vertical-nav">
         {navigationItems.map((item) => (
@@ -183,7 +190,7 @@ function About() {
         {/* Hero Section */}
         <div className="about-hero">
           <h1 className="about-title">
-            <span className="typewriter-text"></span><span className="cursor"></span>
+            <span className="typewriter-text">Little Crafts by WRT</span>
           </h1>
           <p className="about-subtitle">"Made by hand, lend by grace."</p>
         </div>
@@ -191,7 +198,7 @@ function About() {
         {/* Main Content */}
         <div className="about-content">
           {/* About Us Section */}
-          <div className="about-section gsap-fade-in" data-section="about">
+          <div className="about-section fade-in-section" data-section="about">
             <h2 className="section-title">
               <Building2 className="section-icon" size={32} />
               About Us
@@ -214,7 +221,7 @@ function About() {
 
           {/* Services Offered Section */}
           <div
-            className="about-section gsap-fade-in"
+            className="about-section fade-in-section"
             data-section="services"
           >
             <h2 className="section-title">
@@ -284,7 +291,7 @@ function About() {
 
           {/* Work Gallery Section */}
           <div
-            className="about-section gallery-section gsap-fade-in"
+            className="about-section gallery-section fade-in-section"
             data-section="gallery"
           >
             <div className="section-content">
@@ -377,7 +384,7 @@ function About() {
 
           {/* History Section */}
           <div
-            className="about-section history-section gsap-fade-in"
+            className="about-section history-section fade-in-section"
             data-section="story"
           >
             <h2 className="section-title">
@@ -417,7 +424,7 @@ function About() {
         </div>
 
         {/* Call to Action */}
-        <div className="cta-section gsap-fade-in">
+        <div className="cta-section fade-in-section">
           <h2 className="cta-title">Ready to Create Memories?</h2>
           <p className="cta-description">
             Experience our interactive photobooth and capture moments that will
@@ -431,7 +438,7 @@ function About() {
       </div>
 
       {/* Footer Section */}
-      <div className="gsap-fade-in footer-wrapper" data-section="footer">
+      <div className="fade-in-section footer-wrapper" data-section="footer">
         <Footer />
       </div>
     </div>
