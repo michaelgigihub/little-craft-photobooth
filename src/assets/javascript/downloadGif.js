@@ -1,4 +1,5 @@
 import gifshot from "gifshot";
+import { dataURLtoBlob, triggerBlobDownload } from "./downloadUtils.js";
 
 // Get GIF dimensions based on layout
 // Using proportional sizing to maintain aspect ratios
@@ -71,10 +72,8 @@ export const downloadAsGIF = async (photos, layout, setIsGeneratingGif) => {
         setIsGeneratingGif(false);
 
         if (!obj.error) {
-          const link = document.createElement("a");
-          link.download = `photo-strip-${layout}-${Date.now()}.gif`;
-          link.href = obj.image;
-          link.click();
+          const blob = dataURLtoBlob(obj.image);
+          triggerBlobDownload(blob, `photo-strip-${layout}-${Date.now()}.gif`);
         } else {
           console.error("Error creating GIF:", obj.error);
           alert("Error creating GIF. Please try again.");

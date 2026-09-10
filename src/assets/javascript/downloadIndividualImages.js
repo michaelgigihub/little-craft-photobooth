@@ -1,5 +1,8 @@
+import { dataURLtoBlob, triggerBlobDownload } from "./downloadUtils.js";
+
 /**
  * Download individual images as separate JPEG files
+ * Uses Blob URLs instead of data URLs for iOS Safari compatibility.
  * @param {Array} photos - Array of photo data URLs
  * @param {string} layout - Layout type (for filename prefix)
  */
@@ -35,14 +38,8 @@ const downloadManuallyMobile = (photos, layout) => {
     }
 
     const photoDataUrl = photos[currentIndex];
-    const link = document.createElement("a");
-    
-    link.href = photoDataUrl;
-    link.download = `little-craft-photo-${layout}-${currentIndex + 1}.jpg`;
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const blob = dataURLtoBlob(photoDataUrl);
+    triggerBlobDownload(blob, `little-craft-photo-${layout}-${currentIndex + 1}.jpg`);
     
     currentIndex++;
     
@@ -106,13 +103,8 @@ const downloadManuallyMobile = (photos, layout) => {
 const downloadSimultaneously = (photos, layout) => {
   photos.forEach((photoDataUrl, index) => {
     setTimeout(() => {
-      const link = document.createElement("a");
-      link.href = photoDataUrl;
-      link.download = `little-craft-photo-${layout}-${index + 1}.jpg`;
-      
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const blob = dataURLtoBlob(photoDataUrl);
+      triggerBlobDownload(blob, `little-craft-photo-${layout}-${index + 1}.jpg`);
     }, index * 200); // 200ms delay between each download
   });
 
